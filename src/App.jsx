@@ -146,7 +146,7 @@ function useTypewriter(text, speed = 28) {
 }
 
 // ── Fastfetch panel ───────────────────────────────────────────────────────────
-function Fastfetch({ C }) {
+function Fastfetch({ C, isMobile }) {
   const swatches = [
     C.red,
     C.peach,
@@ -179,6 +179,7 @@ function Fastfetch({ C }) {
     <div
       style={{
         display: "flex",
+        flexDirection: isMobile ? "column" : "row",
         gap: 24,
         marginBottom: 20,
         padding: "14px 16px",
@@ -203,16 +204,23 @@ function Fastfetch({ C }) {
           src="/avatar.jpg"
           alt="Jule Ethan"
           style={{
-            width: 250,
-            height: 250,
+            display: isMobile ? "none" : "block",
+            width: isMobile ? "100%" : 250,
+            height: isMobile ? 200 : 250,
             objectFit: "cover",
             borderRadius: 6,
             border: `2px solid ${C.lavender}`,
             flexShrink: 0,
           }}
-        />{" "}
+        />
       </pre>
-      <div style={{ flex: 1, fontSize: 12, lineHeight: 1.0 }}>
+      <div
+        style={{
+          flex: 1,
+          fontSize: "clamp(12.5px, 3vw, 13.5px)",
+          lineHeight: 1.0,
+        }}
+      >
         {rows.map((row, i) => {
           if (row.key === null) return <div key={i} style={{ height: 6 }} />;
           if (row.key === "user")
@@ -305,9 +313,9 @@ function TypedPromptLine({ cmd, C, onDone }) {
 }
 
 // ── Single history entry ──────────────────────────────────────────────────────
-function TerminalEntry({ cmd, C, onTheme, animate }) {
+function TerminalEntry({ cmd, C, onTheme, animate, cmdHistory }) {
   const [showOutput, setShowOutput] = useState(!animate);
-  const output = useCommandOutput(cmd, C, onTheme);
+  const output = useCommandOutput(cmd, C, onTheme, cmdHistory);
   return (
     <div style={{ marginBottom: 18 }}>
       {animate ? (
@@ -342,7 +350,7 @@ function TerminalEntry({ cmd, C, onTheme, animate }) {
 }
 
 // ── Command output resolver ───────────────────────────────────────────────────
-function useCommandOutput(cmd, C, onTheme) {
+function useCommandOutput(cmd, C, onTheme, cmdHistory) {
   const parts = cmd.trim().split(/\s+/);
   const base = parts[0];
   const arg = parts[1] || "";
@@ -368,11 +376,50 @@ function useCommandOutput(cmd, C, onTheme) {
   if (base === "pwd") return <PwdOutput C={C} />;
   if (base === "exit") return <ExitOutput C={C} />;
   if (base === "ping") return <PingOutput C={C} />;
+  if (base === "whoami")
+    return (
+      <p style={{ color: C.text, fontSize: 13 }}>
+        guest — visiting <span style={{ color: C.mauve }}>jule@portfolio</span>
+      </p>
+    );
+  if (base === "history")
+    return <HistoryOutput C={C} cmdHistory={cmdHistory} />;
   return (
     <p style={{ color: C.red, fontSize: 13 }}>
       command not found: <span style={{ color: C.maroon }}>{cmd}</span>. Type{" "}
       <span style={{ color: C.blue }}>help</span> for available commands.
     </p>
+  );
+}
+function HistoryOutput({ C, cmdHistory }) {
+  const list = [...cmdHistory].reverse();
+  return (
+    <div
+      style={{
+        background: C.mantle,
+        border: `1px solid ${C.surface0}`,
+        borderRadius: 6,
+        padding: 12,
+      }}
+    >
+      {list.length === 0 ? (
+        <p style={{ color: C.overlay0, fontSize: 12 }}>No history yet.</p>
+      ) : (
+        list.map((cmd, i) => (
+          <div
+            key={i}
+            style={{ display: "flex", gap: 16, marginBottom: 3, fontSize: 12 }}
+          >
+            <span
+              style={{ color: C.overlay0, minWidth: 28, textAlign: "right" }}
+            >
+              {i + 1}
+            </span>
+            <span style={{ color: C.text }}>{cmd}</span>
+          </div>
+        ))
+      )}
+    </div>
   );
 }
 
@@ -458,6 +505,7 @@ function OpenOutput({ C, arg }) {
     github: "https://github.com/juleethan",
     portfolio: "https://juleethan.vercel.app",
     email: "mailto:juleethan@gmail.com",
+    resume: "/resume.pdf", // drop your PDF in /public/resume.pdf
   };
   useEffect(() => {
     if (targets[arg]) {
@@ -645,12 +693,19 @@ function SkillsOutput({ C }) {
       ],
     },
   ];
+  const isMobile = window.innerWidth < 640;
   return (
     <div>
       <p style={{ color: C.yellow, marginBottom: 12, fontWeight: 600 }}>
         $ cat skills.json
       </p>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          gap: 16,
+        }}
+      >
         {groups.map(({ title, accent, bar, items }) => (
           <div
             key={title}
@@ -1409,6 +1464,31 @@ export default function Portfolio() {
     setInput("");
   };
 
+  const ALL_COMMANDS = [
+    "help",
+    "about",
+    "skills",
+    "projects",
+    "experience",
+    "education",
+    "contact",
+    "fetch",
+    "neofetch",
+    "ls",
+    "fortune",
+    "cowsay",
+    "pwd",
+    "ping",
+    "cmatrix",
+    "exit",
+    "sudo",
+    "theme",
+    "open",
+    "clear",
+    "history",
+    "whoami",
+  ];
+
   const handleKeyDown = (e) => {
     if (e.key === "ArrowUp") {
       const idx = Math.min(cmdIdx + 1, cmdHistory.length - 1);
@@ -1418,6 +1498,12 @@ export default function Portfolio() {
       const idx = Math.max(cmdIdx - 1, -1);
       setCmdIdx(idx);
       setInput(idx === -1 ? "" : cmdHistory[idx] || "");
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      const match = ALL_COMMANDS.find(
+        (c) => c.startsWith(input.trim()) && c !== input.trim(),
+      );
+      if (match) setInput(match);
     }
   };
 
@@ -1446,23 +1532,29 @@ export default function Portfolio() {
     "ping",
     "cmatrix",
     "clear",
+    "whoami",
+    "history",
   ];
-
+  const isMobile = window.innerWidth < 640;
   return (
     <div
       style={{
         minHeight: "100vh",
         background: C.crust,
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        padding: "32px 16px",
+        padding: "clamp(12px, 4vw, 32px) clamp(8px, 3vw, 16px)",
         fontFamily: "Cascadia Code, JetBrains Mono, monospace",
         transition: "background 0.4s",
+        fontSize: "clamp(13px, 3.1vw, 15px)",
       }}
       onClick={() => inputRef.current?.focus()}
     >
-      <div style={{ width: "100%", maxWidth: 920 }}>
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "min(920px, 96vw)",
+          margin: "0 auto",
+        }}
+      >
         {/* window chrome */}
         <div
           style={{
@@ -1528,15 +1620,15 @@ export default function Portfolio() {
             border: `1px solid ${C.surface1}`,
             borderTop: "none",
             borderRadius: "0 0 8px 8px",
-            padding: "20px 24px 16px",
+            padding: "clamp(14px, 3.5vw, 22px) clamp(12px, 3vw, 20px)",
             minHeight: 540,
-            maxHeight: "80vh",
+            maxHeight: isMobile ? "75vh" : "80vh",
             overflowY: "auto",
             transition: "background 0.4s",
           }}
         >
           {/* ASCII banner */}
-          {booted && (
+          {booted && !isMobile && (
             <pre
               style={{
                 color: C.mauve,
@@ -1570,7 +1662,11 @@ export default function Portfolio() {
 
           {booted && (
             <>
-              {showFetch && <Fastfetch C={C} />}
+              {showFetch && (
+                <div style={{ display: isMobile ? "block" : "flex" }}>
+                  <Fastfetch C={C} isMobile={isMobile} />
+                </div>
+              )}
 
               <div
                 style={{
@@ -1597,12 +1693,19 @@ export default function Portfolio() {
                   C={C}
                   onTheme={setThemeName}
                   animate={false}
+                  cmdHistory={cmdHistory}
                 />
               ))}
 
               <form
                 onSubmit={handleSubmit}
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "clamp(4px, 1.5vw, 8px)",
+                  flexWrap: "wrap",
+                  paddingRight: 8,
+                }}
               >
                 <span
                   style={{
@@ -1643,7 +1746,7 @@ export default function Portfolio() {
                     outline: "none",
                     color: C.text,
                     fontFamily: "inherit",
-                    fontSize: 13,
+                    fontSize: "inherit",
                     flex: 1,
                     caretColor: C.mauve,
                   }}
@@ -1655,7 +1758,7 @@ export default function Portfolio() {
         </div>
 
         {/* quick buttons */}
-        {booted && (
+        {/* {booted && (
           <div
             style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}
           >
@@ -1667,9 +1770,9 @@ export default function Portfolio() {
                   background: C.mantle,
                   border: `1px solid ${C.surface1}`,
                   color: C.subtext0,
-                  padding: "5px 12px",
+                  padding: "clamp(4px, 1.8vw, 7px) clamp(8px, 2.5vw, 14px)",
                   borderRadius: 4,
-                  fontSize: 11,
+                  fontSize: "clamp(10px, 2.6vw, 11.5px)",
                   cursor: "pointer",
                   fontFamily: "inherit",
                   transition: "all 0.15s",
@@ -1689,7 +1792,7 @@ export default function Portfolio() {
               </button>
             ))}
           </div>
-        )}
+        )}*/}
 
         <p
           style={{
