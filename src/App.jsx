@@ -198,10 +198,10 @@ function PromptPrefix({ C }) {
 
 // ── Contact info — shared between Fastfetch and AboutOutput ──────────────────
 const CONTACT_INFO = [
-  { icon: "📍", label: "Agoo, La Union" },
-  { icon: "📞", label: "+63 919 369 4589" },
-  { icon: "✉", label: "juleethan@gmail.com" },
-  { icon: "🌐", label: "juleethan.vercel.app" },
+  { label: "Agoo, La Union" },
+  { label: "+63 919 369 4589" },
+  { label: "juleethan@gmail.com" },
+  { label: "juleethan.vercel.app" },
 ];
 
 // ── Fastfetch panel ───────────────────────────────────────────────────────────
