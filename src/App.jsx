@@ -502,7 +502,7 @@ function ThemeOutput({ C, arg, onTheme }) {
 
 function OpenOutput({ C, arg }) {
   const targets = {
-    github: "https://github.com/juleethan",
+    github: "https://github.com/ithereforedontknow",
     portfolio: "https://juleethan.vercel.app",
     email: "mailto:juleethan@gmail.com",
     resume: "/resume.pdf", // drop your PDF in /public/resume.pdf
