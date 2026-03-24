@@ -167,7 +167,7 @@ function Fastfetch({ C, isMobile }) {
     { key: "OS", val: "JULE-ETHAN-OS v1.0.0 LTS", col: C.text },
     { key: "shell", val: "bash 5.2.0", col: C.text },
     { key: "theme", val: `catppuccin-${C.name}`, col: C.mauve },
-    { key: "editor", val: "VS Code / Cursor", col: C.blue },
+    { key: "editor", val: "VS Code / Zed", col: C.blue },
     { key: "stack", val: "React · PHP · MySQL · Tailwind", col: C.peach },
     { key: "degree", val: "BS Information Technology (2025)", col: C.yellow },
     { key: "email", val: "juleethan@gmail.com", col: C.teal },
@@ -819,6 +819,14 @@ function ProjectsOutput({ C }) {
       color: C.peach,
       stack: ["React", "Tailwind CSS"],
       desc: "Sleek, user-centric music discovery platform leveraging React's component-based architecture for curated recommendations and personalized playlists.",
+    },
+    {
+      name: "printer-ni-ethan",
+      client: "Personal Project",
+      type: "Photo Layout",
+      color: C.red,
+      stack: ["React", "Tailwind CSS"],
+      desc: "The Ultimate Professional Photo Layout Generator with guided multi-step workflow, advanced features, and comprehensive tooling.",
     },
   ];
   return (
