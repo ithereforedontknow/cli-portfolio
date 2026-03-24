@@ -120,6 +120,18 @@ const THEMES = {
   },
 };
 
+// ── CSS custom property injection ─────────────────────────────────────────────
+function useThemeVars(C) {
+  useEffect(() => {
+    const root = document.documentElement;
+    Object.entries(C).forEach(([k, v]) => {
+      if (typeof v === "string" && v.startsWith("#")) {
+        root.style.setProperty(`--c-${k}`, v);
+      }
+    });
+  }, [C]);
+}
+
 // ── Typing animation hook ─────────────────────────────────────────────────────
 function useTypewriter(text, speed = 28) {
   const [displayed, setDisplayed] = useState("");
@@ -146,7 +158,7 @@ function useTypewriter(text, speed = 28) {
 }
 
 // ── Fastfetch panel ───────────────────────────────────────────────────────────
-function Fastfetch({ C, isMobile }) {
+function Fastfetch({ C }) {
   const swatches = [
     C.red,
     C.peach,
@@ -175,108 +187,81 @@ function Fastfetch({ C, isMobile }) {
     { key: null },
     { key: "colors" },
   ];
+
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: isMobile ? "column" : "row",
-        gap: 24,
-        marginBottom: 20,
-        padding: "14px 16px",
-        background: C.mantle,
-        border: `1px solid ${C.surface0}`,
-        borderRadius: 8,
-        alignItems: "flex-start",
-      }}
+      className="flex flex-col md:flex-row gap-4 md:gap-6 mb-5 p-3 md:p-4 rounded-lg border"
+      style={{ background: C.mantle, borderColor: C.surface0 }}
     >
-      {/* avatar — swap <pre> for <img src="/avatar.jpg" …> if you have a photo */}
-      <pre
-        style={{
-          color: C.mauve,
-          fontSize: 11,
-          lineHeight: 1.35,
-          margin: 0,
-          flexShrink: 0,
-          userSelect: "none",
-        }}
-      >
+      {/* Avatar — hidden on mobile, shown md+ */}
+      <div className="hidden md:flex flex-shrink-0">
         <img
           src="/avatar.jpg"
           alt="Jule Ethan"
+          className="rounded-md object-cover"
           style={{
-            display: isMobile ? "none" : "block",
-            width: isMobile ? "100%" : 250,
-            height: isMobile ? 200 : 250,
-            objectFit: "cover",
-            borderRadius: 6,
+            width: 220,
+            height: 220,
             border: `2px solid ${C.lavender}`,
-            flexShrink: 0,
           }}
         />
-      </pre>
+      </div>
+
+      {/* Info rows */}
       <div
-        style={{
-          flex: 1,
-          fontSize: "clamp(12.5px, 3vw, 13.5px)",
-          lineHeight: 1.0,
-        }}
+        className="flex-1 min-w-0"
+        style={{ fontSize: "clamp(12px,2.8vw,13.5px)", lineHeight: 1.0 }}
       >
         {rows.map((row, i) => {
-          if (row.key === null) return <div key={i} style={{ height: 6 }} />;
+          if (row.key === null) return <div key={i} className="h-1.5" />;
           if (row.key === "user")
             return (
-              <div key={i} style={{ marginBottom: 4 }}>
-                <span style={{ color: C.green, fontWeight: 700, fontSize: 13 }}>
+              <div key={i} className="mb-1">
+                <span
+                  className="font-bold text-[13px]"
+                  style={{ color: C.green }}
+                >
                   jule
                 </span>
                 <span style={{ color: C.overlay0 }}>@</span>
-                <span style={{ color: C.blue, fontWeight: 700, fontSize: 13 }}>
+                <span
+                  className="font-bold text-[13px]"
+                  style={{ color: C.blue }}
+                >
                   portfolio
                 </span>
               </div>
             );
           if (row.key === "colors")
             return (
-              <div key={i} style={{ display: "flex", gap: 4, marginTop: 4 }}>
+              <div key={i} className="flex flex-wrap gap-1 mt-1">
                 {swatches.map((s) => (
                   <div
                     key={s}
-                    style={{
-                      width: 14,
-                      height: 14,
-                      borderRadius: 3,
-                      background: s,
-                    }}
+                    className="w-3.5 h-3.5 rounded-[3px]"
+                    style={{ background: s }}
                   />
                 ))}
                 {swatches.map((s) => (
                   <div
                     key={s + "dim"}
-                    style={{
-                      width: 14,
-                      height: 14,
-                      borderRadius: 3,
-                      background: s,
-                      opacity: 0.4,
-                    }}
+                    className="w-3.5 h-3.5 rounded-[3px] opacity-40"
+                    style={{ background: s }}
                   />
                 ))}
               </div>
             );
           return (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                gap: 0,
-                marginBottom: 5,
-                alignItems: "baseline",
-              }}
-            >
-              <span style={{ color: C.mauve, fontWeight: 600, minWidth: 72 }}>
+            <div key={i} className="flex gap-0 mb-[5px] items-baseline">
+              <span
+                className="font-semibold"
+                style={{ color: C.mauve, minWidth: 72 }}
+              >
                 {row.key}
               </span>
-              <span style={{ color: C.overlay0, marginRight: 8 }}>~</span>
+              <span className="mr-2" style={{ color: C.overlay0 }}>
+                ~
+              </span>
               <span style={{ color: row.col }}>{row.val}</span>
             </div>
           );
@@ -286,27 +271,29 @@ function Fastfetch({ C, isMobile }) {
   );
 }
 
-// ── Typed prompt line (animation) ─────────────────────────────────────────────
+// ── Typed prompt line ─────────────────────────────────────────────────────────
 function TypedPromptLine({ cmd, C, onDone }) {
   const { displayed, done } = useTypewriter(cmd, 55);
   useEffect(() => {
     if (done) onDone?.();
   }, [done]);
   return (
-    <div
-      style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}
-    >
-      <span style={{ color: C.green, fontSize: 13, fontWeight: 600 }}>
+    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+      <span className="font-semibold text-[13px]" style={{ color: C.green }}>
         jule
       </span>
       <span style={{ color: C.overlay0 }}>@</span>
-      <span style={{ color: C.blue, fontSize: 13, fontWeight: 600 }}>
+      <span className="font-semibold text-[13px]" style={{ color: C.blue }}>
         portfolio
       </span>
       <span style={{ color: C.overlay0 }}>:</span>
-      <span style={{ color: C.mauve, fontSize: 13 }}>~</span>
+      <span className="text-[13px]" style={{ color: C.mauve }}>
+        ~
+      </span>
       <span style={{ color: C.overlay0 }}>$</span>
-      <span style={{ color: C.text, fontSize: 13 }}>{displayed}</span>
+      <span className="text-[13px]" style={{ color: C.text }}>
+        {displayed}
+      </span>
       {!done && <span style={{ color: C.mauve }}>█</span>}
     </div>
   );
@@ -317,34 +304,32 @@ function TerminalEntry({ cmd, C, onTheme, animate, cmdHistory }) {
   const [showOutput, setShowOutput] = useState(!animate);
   const output = useCommandOutput(cmd, C, onTheme, cmdHistory);
   return (
-    <div style={{ marginBottom: 18 }}>
+    <div className="mb-[18px]">
       {animate ? (
         <TypedPromptLine cmd={cmd} C={C} onDone={() => setShowOutput(true)} />
       ) : (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 8,
-          }}
-        >
-          <span style={{ color: C.green, fontSize: 13, fontWeight: 600 }}>
+        <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+          <span
+            className="font-semibold text-[13px]"
+            style={{ color: C.green }}
+          >
             jule
           </span>
           <span style={{ color: C.overlay0 }}>@</span>
-          <span style={{ color: C.blue, fontSize: 13, fontWeight: 600 }}>
+          <span className="font-semibold text-[13px]" style={{ color: C.blue }}>
             portfolio
           </span>
           <span style={{ color: C.overlay0 }}>:</span>
-          <span style={{ color: C.mauve, fontSize: 13 }}>~</span>
+          <span className="text-[13px]" style={{ color: C.mauve }}>
+            ~
+          </span>
           <span style={{ color: C.overlay0 }}>$</span>
-          <span style={{ color: C.text, fontSize: 13 }}>{cmd}</span>
+          <span className="text-[13px]" style={{ color: C.text }}>
+            {cmd}
+          </span>
         </div>
       )}
-      {showOutput && (
-        <div style={{ fontSize: 13, fontFamily: "inherit" }}>{output}</div>
-      )}
+      {showOutput && <div className="text-[13px] font-[inherit]">{output}</div>}
     </div>
   );
 }
@@ -354,7 +339,6 @@ function useCommandOutput(cmd, C, onTheme, cmdHistory) {
   const parts = cmd.trim().split(/\s+/);
   const base = parts[0];
   const arg = parts[1] || "";
-
   if (base === "help") return <HelpOutput C={C} />;
   if (base === "fetch") return <Fastfetch C={C} />;
   if (base === "about") return <AboutOutput C={C} />;
@@ -378,40 +362,37 @@ function useCommandOutput(cmd, C, onTheme, cmdHistory) {
   if (base === "ping") return <PingOutput C={C} />;
   if (base === "whoami")
     return (
-      <p style={{ color: C.text, fontSize: 13 }}>
+      <p className="text-[13px]" style={{ color: C.text }}>
         guest — visiting <span style={{ color: C.mauve }}>jule@portfolio</span>
       </p>
     );
   if (base === "history")
     return <HistoryOutput C={C} cmdHistory={cmdHistory} />;
   return (
-    <p style={{ color: C.red, fontSize: 13 }}>
+    <p className="text-[13px]" style={{ color: C.red }}>
       command not found: <span style={{ color: C.maroon }}>{cmd}</span>. Type{" "}
       <span style={{ color: C.blue }}>help</span> for available commands.
     </p>
   );
 }
+
 function HistoryOutput({ C, cmdHistory }) {
   const list = [...cmdHistory].reverse();
   return (
     <div
-      style={{
-        background: C.mantle,
-        border: `1px solid ${C.surface0}`,
-        borderRadius: 6,
-        padding: 12,
-      }}
+      className="rounded-md border p-3"
+      style={{ background: C.mantle, borderColor: C.surface0 }}
     >
       {list.length === 0 ? (
-        <p style={{ color: C.overlay0, fontSize: 12 }}>No history yet.</p>
+        <p className="text-[12px]" style={{ color: C.overlay0 }}>
+          No history yet.
+        </p>
       ) : (
         list.map((cmd, i) => (
-          <div
-            key={i}
-            style={{ display: "flex", gap: 16, marginBottom: 3, fontSize: 12 }}
-          >
+          <div key={i} className="flex gap-4 mb-[3px] text-[12px]">
             <span
-              style={{ color: C.overlay0, minWidth: 28, textAlign: "right" }}
+              className="min-w-[28px] text-right"
+              style={{ color: C.overlay0 }}
             >
               {i + 1}
             </span>
@@ -449,15 +430,23 @@ function HelpOutput({ C }) {
   ];
   return (
     <div style={{ lineHeight: 1.8 }}>
-      <p style={{ color: C.yellow, marginBottom: 8, fontWeight: 600 }}>
+      <p className="mb-2 font-semibold" style={{ color: C.yellow }}>
         Available commands:
       </p>
       {cmds.map(([cmd, desc]) => (
-        <div key={cmd} style={{ display: "flex", gap: 16, marginBottom: 2 }}>
-          <span style={{ color: C.blue, minWidth: 140, fontWeight: 600 }}>
+        <div key={cmd} className="flex gap-4 mb-[2px] flex-wrap md:flex-nowrap">
+          <span
+            className="font-semibold w-[140px] flex-shrink-0 text-[12px] md:text-[13px]"
+            style={{ color: C.blue }}
+          >
             {cmd}
           </span>
-          <span style={{ color: C.subtext1 }}>{desc}</span>
+          <span
+            className="text-[12px] md:text-[13px]"
+            style={{ color: C.subtext1 }}
+          >
+            {desc}
+          </span>
         </div>
       ))}
     </div>
@@ -471,11 +460,11 @@ function ThemeOutput({ C, arg, onTheme }) {
   }, []);
   if (!arg)
     return (
-      <p style={{ color: C.red, fontSize: 13 }}>
+      <p className="text-[13px]" style={{ color: C.red }}>
         Usage: <span style={{ color: C.blue }}>theme &lt;name&gt;</span> —
         available:{" "}
         {valid.map((t) => (
-          <span key={t} style={{ color: C.mauve, marginRight: 8 }}>
+          <span key={t} className="mr-2" style={{ color: C.mauve }}>
             {t}
           </span>
         ))}
@@ -483,19 +472,21 @@ function ThemeOutput({ C, arg, onTheme }) {
     );
   if (!valid.includes(arg))
     return (
-      <p style={{ color: C.red, fontSize: 13 }}>
+      <p className="text-[13px]" style={{ color: C.red }}>
         Unknown theme <span style={{ color: C.maroon }}>{arg}</span>. Available:{" "}
         {valid.map((t) => (
-          <span key={t} style={{ color: C.mauve, marginRight: 8 }}>
+          <span key={t} className="mr-2" style={{ color: C.mauve }}>
             {t}
           </span>
         ))}
       </p>
     );
   return (
-    <p style={{ color: C.green, fontSize: 13 }}>
+    <p className="text-[13px]" style={{ color: C.green }}>
       ✓ Theme switched to{" "}
-      <span style={{ color: C.mauve, fontWeight: 600 }}>catppuccin-{arg}</span>
+      <span className="font-semibold" style={{ color: C.mauve }}>
+        catppuccin-{arg}
+      </span>
     </p>
   );
 }
@@ -505,26 +496,25 @@ function OpenOutput({ C, arg }) {
     github: "https://github.com/ithereforedontknow",
     portfolio: "https://juleethan.vercel.app",
     email: "mailto:juleethan@gmail.com",
-    resume: "/resume.pdf", // drop your PDF in /public/resume.pdf
+    resume: "/resume.pdf",
   };
   useEffect(() => {
-    if (targets[arg]) {
+    if (targets[arg])
       setTimeout(() => window.open(targets[arg], "_blank"), 300);
-    }
   }, []);
   if (!arg || !targets[arg])
     return (
-      <p style={{ color: C.red, fontSize: 13 }}>
+      <p className="text-[13px]" style={{ color: C.red }}>
         Usage: <span style={{ color: C.blue }}>open</span>{" "}
         {Object.keys(targets).map((t) => (
-          <span key={t} style={{ color: C.mauve, marginRight: 8 }}>
+          <span key={t} className="mr-2" style={{ color: C.mauve }}>
             {t}
           </span>
         ))}
       </p>
     );
   return (
-    <p style={{ color: C.green, fontSize: 13 }}>
+    <p className="text-[13px]" style={{ color: C.green }}>
       ↗ Opening <span style={{ color: C.lavender }}>{targets[arg]}</span> ...
     </p>
   );
@@ -550,8 +540,8 @@ function NeofetchEgg({ C }) {
     { t: "     `-'       `--'", c: C.maroon },
   ];
   return (
-    <div style={{ display: "flex", gap: 24 }}>
-      <pre style={{ margin: 0, lineHeight: 1.4, fontSize: 11 }}>
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+      <pre className="m-0 text-[11px] leading-[1.4] hidden md:block">
         {lines.map((l, i) => (
           <div key={i} style={{ color: l.c }}>
             {l.t}
@@ -559,17 +549,15 @@ function NeofetchEgg({ C }) {
         ))}
       </pre>
       <div
-        style={{
-          fontSize: 12,
-          lineHeight: 1.8,
-          color: C.subtext1,
-          alignSelf: "center",
-        }}
+        className="text-[12px] leading-[1.8] self-start md:self-center"
+        style={{ color: C.subtext1 }}
       >
-        <p style={{ color: C.mauve, fontWeight: 600, marginBottom: 4 }}>
+        <p className="font-semibold mb-1" style={{ color: C.mauve }}>
           jule@portfolio
         </p>
-        <p style={{ color: C.surface0, marginBottom: 8 }}>──────────────────</p>
+        <p className="mb-2" style={{ color: C.surface0 }}>
+          ──────────────────
+        </p>
         {[
           ["OS", "JULE-ETHAN-OS v1.0.0"],
           ["Host", "portfolio.exe"],
@@ -579,14 +567,17 @@ function NeofetchEgg({ C }) {
           ["Icons", "Unicode block chars"],
           ["Memory", "64MB / ∞MB"],
         ].map(([k, v]) => (
-          <div key={k} style={{ display: "flex", gap: 8 }}>
-            <span style={{ color: C.blue, minWidth: 60, fontWeight: 600 }}>
+          <div key={k} className="flex gap-2">
+            <span
+              className="font-semibold min-w-[60px]"
+              style={{ color: C.blue }}
+            >
               {k}
             </span>
             <span style={{ color: C.text }}>{v}</span>
           </div>
         ))}
-        <div style={{ display: "flex", gap: 4, marginTop: 10 }}>
+        <div className="flex gap-1 mt-2.5">
           {[
             C.red,
             C.peach,
@@ -599,7 +590,8 @@ function NeofetchEgg({ C }) {
           ].map((s) => (
             <div
               key={s}
-              style={{ width: 16, height: 16, borderRadius: 3, background: s }}
+              className="w-4 h-4 rounded-[3px]"
+              style={{ background: s }}
             />
           ))}
         </div>
@@ -611,53 +603,49 @@ function NeofetchEgg({ C }) {
 function AboutOutput({ C }) {
   return (
     <div>
-      <p style={{ color: C.yellow, marginBottom: 12, fontWeight: 600 }}>
+      <p className="mb-3 font-semibold" style={{ color: C.yellow }}>
         $ whoami
       </p>
-      <div style={{ borderLeft: `2px solid ${C.lavender}`, paddingLeft: 16 }}>
-        <p style={{ color: C.text, lineHeight: 1.8 }}>
+      <div className="pl-4 border-l-2" style={{ borderColor: C.lavender }}>
+        <p className="leading-[1.8]" style={{ color: C.text }}>
           Recent{" "}
-          <span style={{ color: C.sapphire, fontWeight: 600 }}>
+          <span className="font-semibold" style={{ color: C.sapphire }}>
             BS Information Technology
           </span>{" "}
           graduate from{" "}
-          <span style={{ color: C.green, fontWeight: 600 }}>
+          <span className="font-semibold" style={{ color: C.green }}>
             Saint Louis College
           </span>
           .
         </p>
-        <p style={{ color: C.text, lineHeight: 1.8, marginTop: 8 }}>
+        <p className="leading-[1.8] mt-2" style={{ color: C.text }}>
           Proficient in{" "}
-          <span style={{ color: C.mauve, fontWeight: 600 }}>
+          <span className="font-semibold" style={{ color: C.mauve }}>
             PHP, HTML, CSS, JavaScript
           </span>{" "}
           and database management through capstone projects and personal web
           applications.
         </p>
-        <p style={{ color: C.text, lineHeight: 1.8, marginTop: 8 }}>
+        <p className="leading-[1.8] mt-2" style={{ color: C.text }}>
           Eager to contribute technical skills and quick learning ability.
         </p>
-        <div
-          style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 8 }}
-        >
+        <div className="mt-4 flex flex-wrap gap-2">
           {[
-            ["Agoo, La Union"],
-            ["+63 919 369 4589"],
-            ["juleethan@gmail.com"],
-            ["juleethan.vercel.app"],
-          ].map(([icon, val]) => (
+            "Agoo, La Union",
+            "+63 919 369 4589",
+            "juleethan@gmail.com",
+            "juleethan.vercel.app",
+          ].map((val) => (
             <span
               key={val}
+              className="px-2.5 py-[3px] rounded text-[12px] border"
               style={{
                 background: C.mantle,
-                border: `1px solid ${C.surface0}`,
+                borderColor: C.surface0,
                 color: C.subtext0,
-                padding: "3px 10px",
-                borderRadius: 4,
-                fontSize: 12,
               }}
             >
-              {icon} {val}
+              {val}
             </span>
           ))}
         </div>
@@ -693,68 +681,41 @@ function SkillsOutput({ C }) {
       ],
     },
   ];
-  const isMobile = window.innerWidth < 640;
   return (
     <div>
-      <p style={{ color: C.yellow, marginBottom: 12, fontWeight: 600 }}>
+      <p className="mb-3 font-semibold" style={{ color: C.yellow }}>
         $ cat skills.json
       </p>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-          gap: 16,
-        }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {groups.map(({ title, accent, bar, items }) => (
           <div
             key={title}
-            style={{
-              background: C.mantle,
-              border: `1px solid ${C.surface0}`,
-              borderRadius: 6,
-              padding: 14,
-            }}
+            className="rounded-md border p-3.5"
+            style={{ background: C.mantle, borderColor: C.surface0 }}
           >
             <p
-              style={{
-                color: accent,
-                fontWeight: 600,
-                marginBottom: 12,
-                fontSize: 12,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-              }}
+              className="font-semibold mb-3 text-[11px] tracking-wider uppercase"
+              style={{ color: accent }}
             >
               {title}
             </p>
             {items.map(({ n, l }) => (
-              <div key={n} style={{ marginBottom: 10 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: 4,
-                  }}
-                >
-                  <span style={{ color: C.text, fontSize: 12 }}>{n}</span>
-                  <span style={{ color: C.overlay0, fontSize: 11 }}>{l}%</span>
+              <div key={n} className="mb-2.5">
+                <div className="flex justify-between mb-1">
+                  <span className="text-[12px]" style={{ color: C.text }}>
+                    {n}
+                  </span>
+                  <span className="text-[11px]" style={{ color: C.overlay0 }}>
+                    {l}%
+                  </span>
                 </div>
                 <div
-                  style={{
-                    background: C.surface0,
-                    borderRadius: 2,
-                    height: 4,
-                    overflow: "hidden",
-                  }}
+                  className="h-1 rounded-sm overflow-hidden"
+                  style={{ background: C.surface0 }}
                 >
                   <div
-                    style={{
-                      width: `${l}%`,
-                      height: "100%",
-                      background: bar,
-                      borderRadius: 2,
-                    }}
+                    className="h-full rounded-sm"
+                    style={{ width: `${l}%`, background: bar }}
                   />
                 </div>
               </div>
@@ -762,7 +723,7 @@ function SkillsOutput({ C }) {
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 6 }}>
+      <div className="mt-3 flex flex-wrap gap-1.5">
         {[
           "HTML5",
           "CSS3",
@@ -777,13 +738,11 @@ function SkillsOutput({ C }) {
         ].map((tag) => (
           <span
             key={tag}
+            className="px-2 py-[2px] rounded-[3px] text-[11px] border"
             style={{
               background: C.mantle,
-              border: `1px solid ${C.lavender}`,
+              borderColor: C.lavender,
               color: C.mauve,
-              padding: "2px 8px",
-              borderRadius: 3,
-              fontSize: 11,
             }}
           >
             {tag}
@@ -831,67 +790,48 @@ function ProjectsOutput({ C }) {
   ];
   return (
     <div>
-      <p style={{ color: C.yellow, marginBottom: 12, fontWeight: 600 }}>
+      <p className="mb-3 font-semibold" style={{ color: C.yellow }}>
         $ ls ~/projects/
       </p>
       {projects.map(({ name, client, type, color, stack, desc }) => (
         <div
           key={name}
+          className="rounded-md border border-l-[3px] p-3.5 mb-2.5"
           style={{
             background: C.mantle,
-            border: `1px solid ${C.surface0}`,
-            borderLeft: `3px solid ${color}`,
-            borderRadius: 6,
-            padding: 14,
-            marginBottom: 10,
+            borderColor: C.surface0,
+            borderLeftColor: color,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-              gap: 8,
-            }}
-          >
-            <p style={{ color, fontWeight: 600, fontSize: 14 }}>{name}</p>
+          <div className="flex justify-between items-start flex-wrap gap-2 mb-1">
+            <p className="font-semibold text-[14px]" style={{ color }}>
+              {name}
+            </p>
             <span
-              style={{
-                background: C.surface0,
-                color: C.subtext0,
-                padding: "2px 8px",
-                borderRadius: 3,
-                fontSize: 10,
-              }}
+              className="px-2 py-[2px] rounded-[3px] text-[10px]"
+              style={{ background: C.surface0, color: C.subtext0 }}
             >
               {type}
             </span>
           </div>
-          <p style={{ color: C.overlay1, fontSize: 11, marginBottom: 8 }}>
+          <p className="text-[11px] mb-2" style={{ color: C.overlay1 }}>
             {client}
           </p>
           <p
-            style={{
-              color: C.subtext1,
-              fontSize: 12,
-              lineHeight: 1.7,
-              marginBottom: 10,
-            }}
+            className="text-[12px] leading-[1.7] mb-2.5"
+            style={{ color: C.subtext1 }}
           >
             {desc}
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          <div className="flex flex-wrap gap-1">
             {stack.map((t) => (
               <span
                 key={t}
+                className="px-1.5 py-[1px] rounded-[3px] text-[10px] border"
                 style={{
                   background: C.base,
-                  border: `1px solid ${C.surface1}`,
+                  borderColor: C.surface1,
                   color: C.subtext0,
-                  padding: "1px 6px",
-                  borderRadius: 3,
-                  fontSize: 10,
                 }}
               >
                 {t}
@@ -907,35 +847,24 @@ function ProjectsOutput({ C }) {
 function ExperienceOutput({ C }) {
   return (
     <div>
-      <p style={{ color: C.yellow, marginBottom: 12, fontWeight: 600 }}>
+      <p className="mb-3 font-semibold" style={{ color: C.yellow }}>
         $ cat experience.log
       </p>
-      <div style={{ borderLeft: `2px solid ${C.surface1}`, paddingLeft: 16 }}>
-        <div style={{ position: "relative" }}>
+      <div className="border-l-2 pl-4" style={{ borderColor: C.surface1 }}>
+        <div className="relative">
           <div
-            style={{
-              width: 10,
-              height: 10,
-              background: C.teal,
-              borderRadius: "50%",
-              position: "absolute",
-              left: -21,
-              top: 4,
-            }}
+            className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full"
+            style={{ background: C.teal }}
           />
-          <p style={{ color: C.teal, fontWeight: 600, fontSize: 14 }}>
+          <p className="font-semibold text-[14px]" style={{ color: C.teal }}>
             Information Technology Intern
           </p>
-          <p style={{ color: C.overlay1, fontSize: 12, marginBottom: 8 }}>
+          <p className="text-[12px] mb-2" style={{ color: C.overlay1 }}>
             Commission on Elections (COMELEC) — Agoo · Feb 2025 – May 2025
           </p>
           <div
-            style={{
-              background: C.mantle,
-              border: `1px solid ${C.surface0}`,
-              borderRadius: 6,
-              padding: 12,
-            }}
+            className="rounded-md border p-3"
+            style={{ background: C.mantle, borderColor: C.surface0 }}
           >
             {[
               "Created and managed spreadsheets for tracking data and calculations using Microsoft Excel.",
@@ -944,16 +873,12 @@ function ExperienceOutput({ C }) {
             ].map((item, i) => (
               <div
                 key={i}
-                style={{
-                  display: "flex",
-                  gap: 8,
-                  marginBottom: 6,
-                  color: C.subtext1,
-                  fontSize: 12,
-                  lineHeight: 1.6,
-                }}
+                className="flex gap-2 mb-1.5 text-[12px] leading-[1.6]"
+                style={{ color: C.subtext1 }}
               >
-                <span style={{ color: C.green, flexShrink: 0 }}>▸</span>
+                <span className="flex-shrink-0" style={{ color: C.green }}>
+                  ▸
+                </span>
                 <span>{item}</span>
               </div>
             ))}
@@ -967,59 +892,45 @@ function ExperienceOutput({ C }) {
 function EducationOutput({ C }) {
   return (
     <div>
-      <p style={{ color: C.yellow, marginBottom: 12, fontWeight: 600 }}>
+      <p className="mb-3 font-semibold" style={{ color: C.yellow }}>
         $ cat education.txt
       </p>
       <div
+        className="rounded-md border border-l-[3px] p-3.5"
         style={{
           background: C.mantle,
-          border: `1px solid ${C.surface0}`,
-          borderLeft: `3px solid ${C.green}`,
-          borderRadius: 6,
-          padding: 14,
+          borderColor: C.surface0,
+          borderLeftColor: C.green,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-            gap: 8,
-          }}
-        >
-          <p style={{ color: C.green, fontWeight: 600, fontSize: 14 }}>
+        <div className="flex justify-between items-start flex-wrap gap-2">
+          <p className="font-semibold text-[14px]" style={{ color: C.green }}>
             Bachelor of Science in Information Technology
           </p>
-          <span style={{ color: C.peach, fontSize: 12 }}>July 2025</span>
+          <span className="text-[12px]" style={{ color: C.peach }}>
+            July 2025
+          </span>
         </div>
-        <p style={{ color: C.subtext1, fontSize: 13, marginTop: 4 }}>
+        <p className="text-[13px] mt-1" style={{ color: C.subtext1 }}>
           Saint Louis College
         </p>
-        <div style={{ marginTop: 12 }}>
+        <div className="mt-3">
           <p
-            style={{
-              color: C.overlay0,
-              fontSize: 11,
-              marginBottom: 6,
-              letterSpacing: 1,
-              textTransform: "uppercase",
-            }}
+            className="text-[11px] mb-1.5 tracking-wider uppercase"
+            style={{ color: C.overlay0 }}
           >
             Related Coursework
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <div className="flex flex-wrap gap-1.5">
             {["Database Systems", "Management", "Software Development"].map(
               (c) => (
                 <span
                   key={c}
+                  className="px-2.5 py-[3px] rounded-[3px] text-[12px] border"
                   style={{
                     background: C.base,
-                    border: `1px solid ${C.surface1}`,
+                    borderColor: C.surface1,
                     color: C.subtext1,
-                    padding: "3px 10px",
-                    borderRadius: 3,
-                    fontSize: 12,
                   }}
                 >
                   {c}
@@ -1036,16 +947,12 @@ function EducationOutput({ C }) {
 function ContactOutput({ C }) {
   return (
     <div>
-      <p style={{ color: C.yellow, marginBottom: 12, fontWeight: 600 }}>
+      <p className="mb-3 font-semibold" style={{ color: C.yellow }}>
         $ ping jule-ethan
       </p>
       <div
-        style={{
-          background: C.mantle,
-          border: `1px solid ${C.surface0}`,
-          borderRadius: 6,
-          padding: 14,
-        }}
+        className="rounded-md border p-3.5"
+        style={{ background: C.mantle, borderColor: C.surface0 }}
       >
         {[
           {
@@ -1057,30 +964,22 @@ function ContactOutput({ C }) {
           { label: "Email", value: "juleethan@gmail.com", color: C.green },
           { label: "Portfolio", value: "juleethan.vercel.app", color: C.blue },
         ].map(({ label, value, color }) => (
-          <div
-            key={label}
-            style={{
-              display: "flex",
-              gap: 16,
-              marginBottom: 10,
-              alignItems: "center",
-            }}
-          >
-            <span style={{ color: C.overlay0, minWidth: 70, fontSize: 12 }}>
+          <div key={label} className="flex gap-4 mb-2.5 items-center flex-wrap">
+            <span
+              className="text-[12px] min-w-[70px]"
+              style={{ color: C.overlay0 }}
+            >
               {label}
             </span>
             <span style={{ color: C.surface2 }}>│</span>
-            <span style={{ color, fontSize: 13 }}>{value}</span>
+            <span className="text-[13px] break-all" style={{ color }}>
+              {value}
+            </span>
           </div>
         ))}
         <div
-          style={{
-            marginTop: 12,
-            borderTop: `1px solid ${C.surface0}`,
-            paddingTop: 12,
-            color: C.green,
-            fontSize: 12,
-          }}
+          className="mt-3 border-t pt-3 text-[12px]"
+          style={{ borderColor: C.surface0, color: C.green }}
         >
           ✓ Connection established. Ready to collaborate.
         </div>
@@ -1088,21 +987,23 @@ function ContactOutput({ C }) {
     </div>
   );
 }
+
 function SudoOutput({ C, arg }) {
   const restricted = ["root", "admin", "rm -rf", "shutdown", "hack"];
   const isRestricted = restricted.some((r) => arg.includes(r)) || !arg;
   if (isRestricted)
     return (
       <div>
-        <p style={{ color: C.red, fontSize: 13, marginBottom: 6 }}>
+        <p className="text-[13px] mb-1.5" style={{ color: C.red }}>
           🚨 Access denied. This incident will be reported.
         </p>
-        <p style={{ color: C.subtext0, fontSize: 12 }}>
-          Nice try. Redirecting to reeducation...
+        <p className="text-[12px]" style={{ color: C.subtext0 }}>
+          Nice try. Redirecting to reeducation...{" "}
           <a
             href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
             target="_blank"
-            style={{ color: C.blue, marginLeft: 4 }}
+            className="ml-1"
+            style={{ color: C.blue }}
           >
             click here to proceed
           </a>
@@ -1110,19 +1011,17 @@ function SudoOutput({ C, arg }) {
       </div>
     );
   return (
-    <p style={{ color: C.yellow, fontSize: 13 }}>
+    <p className="text-[13px]" style={{ color: C.yellow }}>
       sudo: {arg}: Permission denied — you are not in the sudoers file.
     </p>
   );
 }
 
 function CmatrixOutput({ C }) {
-  const [frame, setFrame] = useState(0);
   const chars = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789";
   const cols = 28,
     rows = 8;
   const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
   const [grid, setGrid] = useState(() =>
     Array.from({ length: rows }, () =>
       Array.from({ length: cols }, () => ({
@@ -1131,7 +1030,6 @@ function CmatrixOutput({ C }) {
       })),
     ),
   );
-
   useEffect(() => {
     const t = setInterval(() => {
       setGrid((g) =>
@@ -1142,7 +1040,6 @@ function CmatrixOutput({ C }) {
           })),
         ),
       );
-      setFrame((f) => f + 1);
     }, 80);
     const stop = setTimeout(() => clearInterval(t), 6000);
     return () => {
@@ -1150,22 +1047,15 @@ function CmatrixOutput({ C }) {
       clearTimeout(stop);
     };
   }, []);
-
   return (
     <div
-      style={{
-        background: C.mantle,
-        border: `1px solid ${C.surface0}`,
-        borderRadius: 6,
-        padding: 12,
-      }}
+      className="rounded-md border p-3"
+      style={{ background: C.mantle, borderColor: C.surface0 }}
     >
-      <p style={{ color: C.green, fontSize: 11, marginBottom: 8 }}>
+      <p className="text-[11px] mb-2" style={{ color: C.green }}>
         cmatrix — press any key to exit (or just wait 6s)
       </p>
-      <pre
-        style={{ margin: 0, fontSize: 11, lineHeight: 1.4, letterSpacing: 2 }}
-      >
+      <pre className="m-0 text-[11px] leading-[1.4] tracking-widest overflow-x-auto">
         {grid.map((row, ri) => (
           <div key={ri}>
             {row.map((cell, ci) => (
@@ -1200,30 +1090,25 @@ function LsOutput({ C }) {
   ];
   return (
     <div>
-      <p style={{ color: C.yellow, marginBottom: 10, fontWeight: 600 }}>
+      <p className="mb-2.5 font-semibold" style={{ color: C.yellow }}>
         $ ls -la ~/
       </p>
       <div
-        style={{
-          background: C.mantle,
-          border: `1px solid ${C.surface0}`,
-          borderRadius: 6,
-          padding: 12,
-        }}
+        className="rounded-md border p-3"
+        style={{ background: C.mantle, borderColor: C.surface0 }}
       >
-        <p style={{ color: C.overlay0, fontSize: 11, marginBottom: 8 }}>
+        <p className="text-[11px] mb-2" style={{ color: C.overlay0 }}>
           total {files.length}
         </p>
         {files.map(({ name, size, color }) => (
-          <div
-            key={name}
-            style={{ display: "flex", gap: 16, marginBottom: 4, fontSize: 12 }}
-          >
-            <span style={{ color: C.overlay0, minWidth: 40 }}>{size}</span>
+          <div key={name} className="flex gap-4 mb-1 text-[12px]">
+            <span className="min-w-[40px]" style={{ color: C.overlay0 }}>
+              {size}
+            </span>
             <span style={{ color }}>{name}</span>
           </div>
         ))}
-        <p style={{ color: C.overlay0, fontSize: 11, marginTop: 8 }}>
+        <p className="text-[11px] mt-2" style={{ color: C.overlay0 }}>
           hint: <span style={{ color: C.mauve }}>cat</span> a file to view it
         </p>
       </div>
@@ -1248,32 +1133,20 @@ function FortuneOutput({ C }) {
   const quote = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
   return (
     <div
+      className="rounded-md border border-l-[3px] p-3.5"
       style={{
         background: C.mantle,
-        border: `1px solid ${C.surface0}`,
-        borderLeft: `3px solid ${C.yellow}`,
-        borderRadius: 6,
-        padding: 14,
+        borderColor: C.surface0,
+        borderLeftColor: C.yellow,
       }}
     >
       <p
-        style={{
-          color: C.yellow,
-          fontSize: 11,
-          marginBottom: 6,
-          letterSpacing: 1,
-        }}
+        className="text-[11px] mb-1.5 tracking-wider"
+        style={{ color: C.yellow }}
       >
         ✦ FORTUNE ✦
       </p>
-      <p
-        style={{
-          color: C.text,
-          fontSize: 13,
-          lineHeight: 1.7,
-          fontStyle: "italic",
-        }}
-      >
+      <p className="text-[13px] leading-[1.7] italic" style={{ color: C.text }}>
         {quote}
       </p>
     </div>
@@ -1284,22 +1157,18 @@ function CowsayOutput({ C, arg }) {
   const msg = arg || "Moo! Give me a message: cowsay <text>";
   const line = "─".repeat(msg.length + 2);
   return (
-    <pre style={{ color: C.text, fontSize: 12, lineHeight: 1.5, margin: 0 }}>
-      {` ┌${line}┐
- │ ${msg} │
- └${line}┘
-        \\   ^__^
-         \\  (oo)\\_______
-            (__)\\       )\\/\\
-                ||----w |
-                ||     ||`}
+    <pre
+      className="text-[12px] leading-[1.5] m-0 overflow-x-auto"
+      style={{ color: C.text }}
+    >
+      {` ┌${line}┐\n │ ${msg} │\n └${line}┘\n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||`}
     </pre>
   );
 }
 
 function PwdOutput({ C }) {
   return (
-    <p style={{ color: C.text, fontSize: 13 }}>
+    <p className="text-[13px]">
       <span style={{ color: C.blue }}>/</span>
       <span style={{ color: C.text }}>users</span>
       <span style={{ color: C.blue }}>/</span>
@@ -1328,10 +1197,7 @@ function ExitOutput({ C }) {
   return (
     <div>
       {lines.slice(0, step).map((line, i) => (
-        <div
-          key={i}
-          style={{ display: "flex", gap: 12, marginBottom: 3, fontSize: 12 }}
-        >
+        <div key={i} className="flex gap-3 mb-[3px] text-[12px]">
           <span style={{ color: i < step - 1 ? C.green : C.yellow }}>
             [{i < step - 1 ? " OK " : "..."}]
           </span>
@@ -1365,24 +1231,19 @@ function PingOutput({ C }) {
   }, []);
   return (
     <div
-      style={{
-        background: C.mantle,
-        border: `1px solid ${C.surface0}`,
-        borderRadius: 6,
-        padding: 12,
-      }}
+      className="rounded-md border p-3"
+      style={{ background: C.mantle, borderColor: C.surface0 }}
     >
       {results.map((line, i) => (
         <p
           key={i}
+          className="text-[12px] mb-[3px]"
           style={{
             color: line.includes("pong")
               ? C.green
               : line.includes("---")
                 ? C.yellow
                 : C.text,
-            fontSize: 12,
-            marginBottom: 3,
           }}
         >
           {line}
@@ -1391,6 +1252,7 @@ function PingOutput({ C }) {
     </div>
   );
 }
+
 // ── ASCII banner ──────────────────────────────────────────────────────────────
 const ASCII_NAME = `
     ██╗ ██╗██╗ ██╗     ███████╗███████╗████████╗██╗  ██╗ █████╗ ███╗   ██╗
@@ -1400,7 +1262,6 @@ const ASCII_NAME = `
 ║█████║║█████║ ██████╗ ███████╗███████╗   ██║   ██║  ██║██║  ██║██║ ║████║
 ╚═════ ╚═════╝ ╚═════╝ ╚══════╝╚══════╝  ╚══╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝ ╚════╝`;
 
-// ── Boot lines (will be typed out) ───────────────────────────────────────────
 const BOOT_LINES = [
   "Initializing system...",
   "Loading portfolio kernel v1.0.0",
@@ -1409,14 +1270,13 @@ const BOOT_LINES = [
   "Boot complete. Welcome.",
 ];
 
-// ── Typed boot line ───────────────────────────────────────────────────────────
 function BootLine({ text, isLast, onDone, C }) {
   const { displayed, done } = useTypewriter(text, 22);
   useEffect(() => {
     if (done) onDone?.();
   }, [done]);
   return (
-    <div style={{ display: "flex", gap: 12, marginBottom: 3, fontSize: 12 }}>
+    <div className="flex gap-3 mb-[3px] text-[12px]">
       <span style={{ color: done && !isLast ? C.green : C.yellow }}>
         [{done && !isLast ? " OK " : "..."}]
       </span>
@@ -1429,6 +1289,7 @@ function BootLine({ text, isLast, onDone, C }) {
 export default function Portfolio() {
   const [themeName, setThemeName] = useState("latte");
   const C = { ...THEMES[themeName], name: themeName };
+  useThemeVars(C);
 
   const [history, setHistory] = useState([]);
   const [input, setInput] = useState("");
@@ -1441,16 +1302,13 @@ export default function Portfolio() {
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
-  // advance boot one line at a time via onDone callback
   const handleBootLineDone = useCallback((i) => {
     if (i < BOOT_LINES.length - 1) {
       setBootStep(i + 1);
     } else {
       setTimeout(() => {
         setBooted(true);
-        setTimeout(() => {
-          setShowFetch(true);
-        }, 150);
+        setTimeout(() => setShowFetch(true), 150);
       }, 300);
     }
   }, []);
@@ -1466,7 +1324,9 @@ export default function Portfolio() {
     if (cmd === "clear") {
       setHistory([]);
       setShowFetch(false);
-    } else setHistory((h) => [...h, cmd]);
+    } else {
+      setHistory((h) => [...h, cmd]);
+    }
     setCmdHistory((h) => [cmd, ...h]);
     setCmdIdx(-1);
     setInput("");
@@ -1515,87 +1375,46 @@ export default function Portfolio() {
     }
   };
 
-  const runCmd = (cmd) => {
-    if (cmd === "clear") {
-      setHistory([]);
-      setShowFetch(false);
-    } else setHistory((h) => [...h, cmd]);
-    inputRef.current?.focus();
-  };
-
-  const quickBtns = [
-    "help",
-    "about",
-    "skills",
-    "projects",
-    "experience",
-    "education",
-    "contact",
-    "fetch",
-    "neofetch",
-    "ls",
-    "fortune",
-    "cowsay hi",
-    "pwd",
-    "ping",
-    "cmatrix",
-    "clear",
-    "whoami",
-    "history",
-  ];
-  const isMobile = window.innerWidth < 640;
   return (
     <div
+      className="min-h-screen px-2 py-3 md:px-4 md:py-6 lg:px-8 lg:py-8 transition-colors duration-300"
       style={{
-        minHeight: "100vh",
         background: C.crust,
-        padding: "clamp(12px, 4vw, 32px) clamp(8px, 3vw, 16px)",
-        fontFamily: "Cascadia Code, JetBrains Mono, monospace",
-        transition: "background 0.4s",
-        fontSize: "clamp(13px, 3.1vw, 15px)",
+        fontFamily: "'Cascadia Code', 'JetBrains Mono', 'Fira Code', monospace",
+        fontSize: "clamp(12px, 3vw, 14px)",
       }}
       onClick={() => inputRef.current?.focus()}
     >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "min(920px, 96vw)",
-          margin: "0 auto",
-        }}
-      >
-        {/* window chrome */}
+      <div className="w-full mx-auto" style={{ maxWidth: "min(940px, 96vw)" }}>
+        {/* ── Window chrome ── */}
         <div
-          style={{
-            background: C.mantle,
-            border: `1px solid ${C.surface1}`,
-            borderRadius: "10px 10px 0 0",
-            padding: "10px 16px",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            transition: "background 0.4s",
-          }}
+          className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 rounded-t-[10px] border transition-colors duration-300"
+          style={{ background: C.mantle, borderColor: C.surface1 }}
         >
-          <div style={{ display: "flex", gap: 6 }}>
+          {/* Traffic lights */}
+          <div className="flex gap-1.5 flex-shrink-0">
             {[C.red, C.yellow, C.green].map((c) => (
               <div
                 key={c}
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: "50%",
-                  background: c,
-                }}
+                className="w-3 h-3 rounded-full"
+                style={{ background: c }}
               />
             ))}
           </div>
-          <div style={{ flex: 1, textAlign: "center" }}>
-            <span style={{ color: C.overlay0, fontSize: 12 }}>
-              jule@portfolio — bash — catppuccin-{themeName}
+
+          {/* Title — truncated on mobile */}
+          <div className="flex-1 text-center min-w-0">
+            <span
+              className="text-[11px] md:text-[12px] truncate block"
+              style={{ color: C.overlay0 }}
+            >
+              <span className="hidden sm:inline">jule@portfolio — bash — </span>
+              catppuccin-{themeName}
             </span>
           </div>
-          {/* theme pills */}
-          <div style={{ display: "flex", gap: 4 }}>
+
+          {/* Theme switcher — pills on md+, compact on mobile */}
+          <div className="flex gap-1 flex-shrink-0">
             {Object.keys(THEMES).map((t) => (
               <button
                 key={t}
@@ -1603,57 +1422,49 @@ export default function Portfolio() {
                   e.stopPropagation();
                   setThemeName(t);
                 }}
+                className="px-1.5 md:px-2 py-[2px] rounded-[3px] text-[8px] md:text-[9px] cursor-pointer transition-all duration-200 border font-[inherit]"
                 style={{
                   background: t === themeName ? C.mauve : "transparent",
-                  border: `1px solid ${t === themeName ? C.mauve : C.surface1}`,
+                  borderColor: t === themeName ? C.mauve : C.surface1,
                   color: t === themeName ? C.base : C.overlay0,
-                  padding: "2px 7px",
-                  borderRadius: 3,
-                  fontSize: 9,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  transition: "all 0.2s",
                 }}
               >
-                {t}
+                {/* Abbreviated on mobile */}
+                <span className="hidden md:inline">{t}</span>
+                <span className="md:hidden">{t.slice(0, 2)}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* terminal body */}
+        {/* ── Terminal body ── */}
         <div
+          className="border border-t-0 rounded-b-[8px] transition-colors duration-300 overflow-y-auto"
           style={{
             background: C.base,
-            border: `1px solid ${C.surface1}`,
-            borderTop: "none",
-            borderRadius: "0 0 8px 8px",
-            padding: "clamp(14px, 3.5vw, 22px) clamp(12px, 3vw, 20px)",
-            minHeight: 540,
-            maxHeight: isMobile ? "75vh" : "80vh",
-            overflowY: "auto",
-            transition: "background 0.4s",
+            borderColor: C.surface1,
+            padding: "clamp(12px,3.5vw,22px) clamp(10px,3vw,20px)",
+            minHeight: 480,
+            maxHeight: "clamp(400px, 80vh, 700px)",
           }}
         >
-          {/* ASCII banner */}
-          {booted && !isMobile && (
+          {/* ASCII banner — only lg+ */}
+          {booted && (
             <pre
+              className="hidden lg:block m-0 mb-3 overflow-hidden whitespace-pre"
               style={{
                 color: C.mauve,
-                fontSize: "clamp(3px,1vw,9px)",
+                fontSize: "clamp(3px,0.75vw,8px)",
                 lineHeight: 1.2,
-                marginBottom: 12,
-                overflow: "hidden",
-                whiteSpace: "pre",
               }}
             >
               {ASCII_NAME}
             </pre>
           )}
 
-          {/* boot sequence — typed line by line */}
+          {/* ── Boot sequence ── */}
           {!booted && (
-            <div style={{ marginBottom: 16 }}>
+            <div className="mb-4">
               {BOOT_LINES.slice(0, bootStep + 1).map((line, i) => (
                 <BootLine
                   key={i}
@@ -1668,29 +1479,28 @@ export default function Portfolio() {
             </div>
           )}
 
+          {/* ── Post-boot UI ── */}
           {booted && (
             <>
-              {showFetch && (
-                <div style={{ display: isMobile ? "block" : "flex" }}>
-                  <Fastfetch C={C} isMobile={isMobile} />
-                </div>
-              )}
+              {showFetch && <Fastfetch C={C} />}
 
               <div
-                style={{
-                  borderBottom: `1px solid ${C.surface0}`,
-                  marginBottom: 16,
-                  paddingBottom: 8,
-                }}
+                className="border-b mb-4 pb-2"
+                style={{ borderColor: C.surface0 }}
               >
-                <p style={{ color: C.overlay1, fontSize: 11 }}>
+                <p className="text-[11px]" style={{ color: C.overlay1 }}>
                   JULE-ETHAN-OS v1.0.0 LTS — Type{" "}
-                  <span style={{ color: C.blue }}>help</span> · theme{" "}
-                  <span style={{ color: C.mauve }}>
-                    latte|frappe|macchiato|mocha
-                  </span>{" "}
-                  · open{" "}
-                  <span style={{ color: C.teal }}>github|portfolio|email</span>
+                  <span style={{ color: C.blue }}>help</span>{" "}
+                  <span className="hidden sm:inline">
+                    · theme{" "}
+                    <span style={{ color: C.mauve }}>
+                      latte|frappe|macchiato|mocha
+                    </span>{" "}
+                    · open{" "}
+                    <span style={{ color: C.teal }}>
+                      github|portfolio|email
+                    </span>
+                  </span>
                 </p>
               </div>
 
@@ -1705,39 +1515,29 @@ export default function Portfolio() {
                 />
               ))}
 
+              {/* Input line */}
               <form
                 onSubmit={handleSubmit}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "clamp(4px, 1.5vw, 8px)",
-                  flexWrap: "wrap",
-                  paddingRight: 8,
-                }}
+                className="flex items-center gap-1 md:gap-1.5 flex-wrap pr-2"
               >
                 <span
-                  style={{
-                    color: C.green,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    flexShrink: 0,
-                  }}
+                  className="font-semibold text-[13px] flex-shrink-0"
+                  style={{ color: C.green }}
                 >
                   jule
                 </span>
                 <span style={{ color: C.overlay0 }}>@</span>
                 <span
-                  style={{
-                    color: C.blue,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    flexShrink: 0,
-                  }}
+                  className="font-semibold text-[13px] flex-shrink-0"
+                  style={{ color: C.blue }}
                 >
                   portfolio
                 </span>
                 <span style={{ color: C.overlay0 }}>:</span>
-                <span style={{ color: C.mauve, fontSize: 13, flexShrink: 0 }}>
+                <span
+                  className="text-[13px] flex-shrink-0"
+                  style={{ color: C.mauve }}
+                >
                   ~
                 </span>
                 <span style={{ color: C.overlay0 }}>$</span>
@@ -1748,16 +1548,8 @@ export default function Portfolio() {
                   onKeyDown={handleKeyDown}
                   autoFocus
                   spellCheck={false}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    outline: "none",
-                    color: C.text,
-                    fontFamily: "inherit",
-                    fontSize: "inherit",
-                    flex: 1,
-                    caretColor: C.mauve,
-                  }}
+                  className="bg-transparent border-none outline-none flex-1 min-w-[60px] font-[inherit] text-[inherit]"
+                  style={{ color: C.text, caretColor: C.mauve }}
                 />
               </form>
             </>
@@ -1765,54 +1557,17 @@ export default function Portfolio() {
           <div ref={bottomRef} />
         </div>
 
-        {/* quick buttons */}
-        {/* {booted && (
-          <div
-            style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}
-          >
-            {quickBtns.map((cmd) => (
-              <button
-                key={cmd}
-                onClick={() => runCmd(cmd)}
-                style={{
-                  background: C.mantle,
-                  border: `1px solid ${C.surface1}`,
-                  color: C.subtext0,
-                  padding: "clamp(4px, 1.8vw, 7px) clamp(8px, 2.5vw, 14px)",
-                  borderRadius: 4,
-                  fontSize: "clamp(10px, 2.6vw, 11.5px)",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = C.base;
-                  e.currentTarget.style.color = C.mauve;
-                  e.currentTarget.style.borderColor = C.lavender;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = C.mantle;
-                  e.currentTarget.style.color = C.subtext0;
-                  e.currentTarget.style.borderColor = C.surface1;
-                }}
-              >
-                ./{cmd}
-              </button>
-            ))}
-          </div>
-        )}*/}
-
+        {/* ── Footer hint ── */}
         <p
-          style={{
-            color: C.overlay0,
-            fontSize: 10,
-            textAlign: "center",
-            marginTop: 10,
-            fontFamily: "inherit",
-          }}
+          className="text-[10px] text-center mt-2.5 font-[inherit]"
+          style={{ color: C.overlay0 }}
         >
-          ↑↓ navigate history · theme latte|frappe|macchiato|mocha · open
-          github|portfolio|email
+          <span className="hidden md:inline">↑↓ navigate history · </span>
+          theme latte|frappe|macchiato|mocha
+          <span className="hidden sm:inline">
+            {" "}
+            · open github|portfolio|email
+          </span>
         </p>
       </div>
     </div>
