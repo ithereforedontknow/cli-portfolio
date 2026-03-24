@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 // ── Catppuccin palettes ───────────────────────────────────────────────────────
 const THEMES = {
@@ -132,6 +132,19 @@ function useThemeVars(C) {
   }, [C]);
 }
 
+// ── Responsive window width hook (replaces window.innerWidth in render) ───────
+function useWindowWidth() {
+  const [width, setWidth] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth : 1024,
+  );
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handler, { passive: true });
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return width;
+}
+
 // ── Typing animation hook ─────────────────────────────────────────────────────
 function useTypewriter(text, speed = 28) {
   const [displayed, setDisplayed] = useState("");
@@ -156,6 +169,40 @@ function useTypewriter(text, speed = 28) {
   }, [text, speed]);
   return { displayed, done };
 }
+
+// ── Shared prompt prefix — single source of truth ────────────────────────────
+function PromptPrefix({ C }) {
+  return (
+    <>
+      <span
+        className="font-semibold text-[13px] flex-shrink-0"
+        style={{ color: C.green }}
+      >
+        jule
+      </span>
+      <span style={{ color: C.overlay0 }}>@</span>
+      <span
+        className="font-semibold text-[13px] flex-shrink-0"
+        style={{ color: C.blue }}
+      >
+        portfolio
+      </span>
+      <span style={{ color: C.overlay0 }}>:</span>
+      <span className="text-[13px] flex-shrink-0" style={{ color: C.mauve }}>
+        ~
+      </span>
+      <span style={{ color: C.overlay0 }}>$</span>
+    </>
+  );
+}
+
+// ── Contact info — shared between Fastfetch and AboutOutput ──────────────────
+const CONTACT_INFO = [
+  { icon: "📍", label: "Agoo, La Union" },
+  { icon: "📞", label: "+63 919 369 4589" },
+  { icon: "✉", label: "juleethan@gmail.com" },
+  { icon: "🌐", label: "juleethan.vercel.app" },
+];
 
 // ── Fastfetch panel ───────────────────────────────────────────────────────────
 function Fastfetch({ C }) {
@@ -193,17 +240,13 @@ function Fastfetch({ C }) {
       className="flex flex-col md:flex-row gap-4 md:gap-6 mb-5 p-3 md:p-4 rounded-lg border"
       style={{ background: C.mantle, borderColor: C.surface0 }}
     >
-      {/* Avatar — hidden on mobile, shown md+ */}
+      {/* Avatar — hidden on mobile */}
       <div className="hidden md:flex flex-shrink-0">
         <img
           src="/avatar.jpg"
           alt="Jule Ethan"
           className="rounded-md object-cover"
-          style={{
-            width: 220,
-            height: 220,
-            border: `2px solid ${C.lavender}`,
-          }}
+          style={{ width: 220, height: 220, border: `2px solid ${C.lavender}` }}
         />
       </div>
 
@@ -271,26 +314,15 @@ function Fastfetch({ C }) {
   );
 }
 
-// ── Typed prompt line ─────────────────────────────────────────────────────────
+// ── Typed prompt line (boot animation) ───────────────────────────────────────
 function TypedPromptLine({ cmd, C, onDone }) {
   const { displayed, done } = useTypewriter(cmd, 55);
   useEffect(() => {
     if (done) onDone?.();
-  }, [done]);
+  }, [done, onDone]);
   return (
     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-      <span className="font-semibold text-[13px]" style={{ color: C.green }}>
-        jule
-      </span>
-      <span style={{ color: C.overlay0 }}>@</span>
-      <span className="font-semibold text-[13px]" style={{ color: C.blue }}>
-        portfolio
-      </span>
-      <span style={{ color: C.overlay0 }}>:</span>
-      <span className="text-[13px]" style={{ color: C.mauve }}>
-        ~
-      </span>
-      <span style={{ color: C.overlay0 }}>$</span>
+      <PromptPrefix C={C} />
       <span className="text-[13px]" style={{ color: C.text }}>
         {displayed}
       </span>
@@ -299,83 +331,118 @@ function TypedPromptLine({ cmd, C, onDone }) {
   );
 }
 
+// ── Fade-in wrapper for command output ────────────────────────────────────────
+function FadeIn({ children }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(4px)",
+        transition: "opacity 0.18s ease-out, transform 0.18s ease-out",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 // ── Single history entry ──────────────────────────────────────────────────────
 function TerminalEntry({ cmd, C, onTheme, animate, cmdHistory }) {
   const [showOutput, setShowOutput] = useState(!animate);
-  const output = useCommandOutput(cmd, C, onTheme, cmdHistory);
+  const output = getCommandOutput(cmd, C, onTheme, cmdHistory);
+
   return (
     <div className="mb-[18px]">
       {animate ? (
         <TypedPromptLine cmd={cmd} C={C} onDone={() => setShowOutput(true)} />
       ) : (
         <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-          <span
-            className="font-semibold text-[13px]"
-            style={{ color: C.green }}
-          >
-            jule
-          </span>
-          <span style={{ color: C.overlay0 }}>@</span>
-          <span className="font-semibold text-[13px]" style={{ color: C.blue }}>
-            portfolio
-          </span>
-          <span style={{ color: C.overlay0 }}>:</span>
-          <span className="text-[13px]" style={{ color: C.mauve }}>
-            ~
-          </span>
-          <span style={{ color: C.overlay0 }}>$</span>
+          <PromptPrefix C={C} />
           <span className="text-[13px]" style={{ color: C.text }}>
             {cmd}
           </span>
         </div>
       )}
-      {showOutput && <div className="text-[13px] font-[inherit]">{output}</div>}
+      {showOutput && (
+        <FadeIn>
+          <div className="text-[13px] font-[inherit]">{output}</div>
+        </FadeIn>
+      )}
     </div>
   );
 }
 
-// ── Command output resolver ───────────────────────────────────────────────────
-function useCommandOutput(cmd, C, onTheme, cmdHistory) {
+// ── Command output resolver (pure function, not a hook) ───────────────────────
+function getCommandOutput(cmd, C, onTheme, cmdHistory) {
   const parts = cmd.trim().split(/\s+/);
   const base = parts[0];
   const arg = parts[1] || "";
-  if (base === "help") return <HelpOutput C={C} />;
-  if (base === "fetch") return <Fastfetch C={C} />;
-  if (base === "about") return <AboutOutput C={C} />;
-  if (base === "skills") return <SkillsOutput C={C} />;
-  if (base === "projects") return <ProjectsOutput C={C} />;
-  if (base === "experience") return <ExperienceOutput C={C} />;
-  if (base === "education") return <EducationOutput C={C} />;
-  if (base === "contact") return <ContactOutput C={C} />;
-  if (base === "neofetch") return <NeofetchEgg C={C} />;
-  if (base === "theme")
-    return <ThemeOutput C={C} arg={arg} onTheme={onTheme} />;
-  if (base === "open") return <OpenOutput C={C} arg={arg} />;
-  if (base === "sudo") return <SudoOutput C={C} arg={arg} />;
-  if (base === "cmatrix") return <CmatrixOutput C={C} />;
-  if (base === "ls") return <LsOutput C={C} />;
-  if (base === "fortune") return <FortuneOutput C={C} />;
-  if (base === "cowsay")
-    return <CowsayOutput C={C} arg={parts.slice(1).join(" ")} />;
-  if (base === "pwd") return <PwdOutput C={C} />;
-  if (base === "exit") return <ExitOutput C={C} />;
-  if (base === "ping") return <PingOutput C={C} />;
-  if (base === "whoami")
-    return (
-      <p className="text-[13px]" style={{ color: C.text }}>
-        guest — visiting <span style={{ color: C.mauve }}>jule@portfolio</span>
-      </p>
-    );
-  if (base === "history")
-    return <HistoryOutput C={C} cmdHistory={cmdHistory} />;
-  return (
-    <p className="text-[13px]" style={{ color: C.red }}>
-      command not found: <span style={{ color: C.maroon }}>{cmd}</span>. Type{" "}
-      <span style={{ color: C.blue }}>help</span> for available commands.
-    </p>
-  );
+
+  switch (base) {
+    case "help":
+      return <HelpOutput C={C} />;
+    case "fetch":
+      return <Fastfetch C={C} />;
+    case "about":
+      return <AboutOutput C={C} />;
+    case "skills":
+      return <SkillsOutput C={C} />;
+    case "projects":
+      return <ProjectsOutput C={C} />;
+    case "experience":
+      return <ExperienceOutput C={C} />;
+    case "education":
+      return <EducationOutput C={C} />;
+    case "contact":
+      return <ContactOutput C={C} />;
+    case "neofetch":
+      return <NeofetchEgg C={C} />;
+    case "theme":
+      return <ThemeOutput C={C} arg={arg} onTheme={onTheme} />;
+    case "open":
+      return <OpenOutput C={C} arg={arg} />;
+    case "sudo":
+      return <SudoOutput C={C} arg={arg} />;
+    case "cmatrix":
+      return <CmatrixOutput C={C} />;
+    case "ls":
+      return <LsOutput C={C} />;
+    case "fortune":
+      return <FortuneOutput C={C} />;
+    case "cowsay":
+      return <CowsayOutput C={C} arg={parts.slice(1).join(" ")} />;
+    case "pwd":
+      return <PwdOutput C={C} />;
+    case "exit":
+      return <ExitOutput C={C} />;
+    case "ping":
+      return <PingOutput C={C} />;
+    case "history":
+      return <HistoryOutput C={C} cmdHistory={cmdHistory} />;
+    case "whoami":
+      return (
+        <p className="text-[13px]" style={{ color: C.text }}>
+          guest — visiting{" "}
+          <span style={{ color: C.mauve }}>jule@portfolio</span>
+        </p>
+      );
+    default:
+      return (
+        <p className="text-[13px]" style={{ color: C.red }}>
+          command not found: <span style={{ color: C.maroon }}>{cmd}</span>.
+          Type <span style={{ color: C.blue }}>help</span> for available
+          commands.
+        </p>
+      );
+  }
 }
 
+// ── Output components ─────────────────────────────────────────────────────────
 function HistoryOutput({ C, cmdHistory }) {
   const list = [...cmdHistory].reverse();
   return (
@@ -404,7 +471,6 @@ function HistoryOutput({ C, cmdHistory }) {
   );
 }
 
-// ── Output components ─────────────────────────────────────────────────────────
 function HelpOutput({ C }) {
   const cmds = [
     ["about", "Who is Jule Ethan?"],
@@ -414,7 +480,7 @@ function HelpOutput({ C }) {
     ["education", "Academic background"],
     ["contact", "Get in touch"],
     ["fetch", "Show fastfetch panel again"],
-    ["theme <name>", "Switch theme: latte frappe macchiato mocha"],
+    ["theme <n>", "Switch theme: latte frappe macchiato mocha"],
     ["open <target>", "Open github | portfolio | email"],
     ["neofetch", "???"],
     ["clear", "Clear the terminal"],
@@ -457,7 +523,8 @@ function ThemeOutput({ C, arg, onTheme }) {
   const valid = ["latte", "frappe", "macchiato", "mocha"];
   useEffect(() => {
     if (valid.includes(arg)) onTheme?.(arg);
-  }, []);
+  }, [arg, onTheme]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!arg)
     return (
       <p className="text-[13px]" style={{ color: C.red }}>
@@ -499,9 +566,12 @@ function OpenOutput({ C, arg }) {
     resume: "/resume.pdf",
   };
   useEffect(() => {
-    if (targets[arg])
-      setTimeout(() => window.open(targets[arg], "_blank"), 300);
-  }, []);
+    if (targets[arg]) {
+      const t = setTimeout(() => window.open(targets[arg], "_blank"), 300);
+      return () => clearTimeout(t);
+    }
+  }, [arg]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!arg || !targets[arg])
     return (
       <p className="text-[13px]" style={{ color: C.red }}>
@@ -629,15 +699,11 @@ function AboutOutput({ C }) {
         <p className="leading-[1.8] mt-2" style={{ color: C.text }}>
           Eager to contribute technical skills and quick learning ability.
         </p>
+        {/* Fixed: each pill correctly renders icon + label from shared CONTACT_INFO */}
         <div className="mt-4 flex flex-wrap gap-2">
-          {[
-            "Agoo, La Union",
-            "+63 919 369 4589",
-            "juleethan@gmail.com",
-            "juleethan.vercel.app",
-          ].map((val) => (
+          {CONTACT_INFO.map(({ icon, label }) => (
             <span
-              key={val}
+              key={label}
               className="px-2.5 py-[3px] rounded text-[12px] border"
               style={{
                 background: C.mantle,
@@ -645,7 +711,7 @@ function AboutOutput({ C }) {
                 color: C.subtext0,
               }}
             >
-              {val}
+              {icon} {label}
             </span>
           ))}
         </div>
@@ -655,6 +721,10 @@ function AboutOutput({ C }) {
 }
 
 function SkillsOutput({ C }) {
+  const width = useWindowWidth();
+  // Drives grid layout reactively — no more stale window.innerWidth snapshot
+  const _isMobile = width < 768; // kept for future use; grid handled by Tailwind
+
   const groups = [
     {
       title: "Technical",
@@ -681,6 +751,7 @@ function SkillsOutput({ C }) {
       ],
     },
   ];
+
   return (
     <div>
       <p className="mb-3 font-semibold" style={{ color: C.yellow }}>
@@ -1002,6 +1073,7 @@ function SudoOutput({ C, arg }) {
           <a
             href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
             target="_blank"
+            rel="noreferrer"
             className="ml-1"
             style={{ color: C.blue }}
           >
@@ -1019,12 +1091,12 @@ function SudoOutput({ C, arg }) {
 
 function CmatrixOutput({ C }) {
   const chars = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789";
-  const cols = 28,
-    rows = 8;
+  const COLS = 28,
+    ROWS = 8;
   const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
   const [grid, setGrid] = useState(() =>
-    Array.from({ length: rows }, () =>
-      Array.from({ length: cols }, () => ({
+    Array.from({ length: ROWS }, () =>
+      Array.from({ length: COLS }, () => ({
         ch: rand([...chars, " ", " "]),
         bright: Math.random() > 0.85,
       })),
@@ -1046,7 +1118,8 @@ function CmatrixOutput({ C }) {
       clearInterval(t);
       clearTimeout(stop);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div
       className="rounded-md border p-3"
@@ -1130,7 +1203,11 @@ const FORTUNES = [
 ];
 
 function FortuneOutput({ C }) {
-  const quote = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+  // useMemo so the quote doesn't re-roll on theme changes
+  const quote = useMemo(
+    () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)],
+    [], // eslint-disable-line react-hooks/exhaustive-deps
+  );
   return (
     <div
       className="rounded-md border border-l-[3px] p-3.5"
@@ -1193,7 +1270,7 @@ function ExitOutput({ C }) {
       const t = setTimeout(() => setStep((s) => s + 1), 500);
       return () => clearTimeout(t);
     }
-  }, [step]);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div>
       {lines.slice(0, step).map((line, i) => (
@@ -1225,9 +1302,11 @@ function PingOutput({ C }) {
       `3 packets transmitted, 3 received, 0% packet loss`,
       `pong! 🏓`,
     ];
-    pings.forEach((line, i) => {
-      setTimeout(() => setResults((r) => [...r, line]), i * 300);
-    });
+    // Store timers so we can clean them all up on unmount
+    const timers = pings.map((line, i) =>
+      setTimeout(() => setResults((r) => [...r, line]), i * 300),
+    );
+    return () => timers.forEach(clearTimeout);
   }, []);
   return (
     <div
@@ -1274,7 +1353,7 @@ function BootLine({ text, isLast, onDone, C }) {
   const { displayed, done } = useTypewriter(text, 22);
   useEffect(() => {
     if (done) onDone?.();
-  }, [done]);
+  }, [done, onDone]);
   return (
     <div className="flex gap-3 mb-[3px] text-[12px]">
       <span style={{ color: done && !isLast ? C.green : C.yellow }}>
@@ -1288,7 +1367,11 @@ function BootLine({ text, isLast, onDone, C }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Portfolio() {
   const [themeName, setThemeName] = useState("latte");
-  const C = { ...THEMES[themeName], name: themeName };
+  // Memoised so downstream components don't re-render on unrelated state changes
+  const C = useMemo(
+    () => ({ ...THEMES[themeName], name: themeName }),
+    [themeName],
+  );
   useThemeVars(C);
 
   const [history, setHistory] = useState([]);
@@ -1301,6 +1384,7 @@ export default function Portfolio() {
 
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+  const prevLenRef = useRef(0); // track history length to avoid over-scrolling
 
   const handleBootLineDone = useCallback((i) => {
     if (i < BOOT_LINES.length - 1) {
@@ -1313,9 +1397,21 @@ export default function Portfolio() {
     }
   }, []);
 
+  // Scroll only when history actually grows — "auto" for rapid commands prevents jank
+  useEffect(() => {
+    const grew = history.length > prevLenRef.current;
+    prevLenRef.current = history.length;
+    if (grew || showFetch) {
+      bottomRef.current?.scrollIntoView({
+        behavior: history.length <= 1 ? "smooth" : "auto",
+      });
+    }
+  }, [history, showFetch]);
+
+  // Separate effect for boot so it doesn't collide with the history scroll logic
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [history, bootStep, showFetch, booted]);
+  }, [bootStep, booted]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -1324,6 +1420,7 @@ export default function Portfolio() {
     if (cmd === "clear") {
       setHistory([]);
       setShowFetch(false);
+      prevLenRef.current = 0;
     } else {
       setHistory((h) => [...h, cmd]);
     }
@@ -1359,17 +1456,20 @@ export default function Portfolio() {
 
   const handleKeyDown = (e) => {
     if (e.key === "ArrowUp") {
+      e.preventDefault(); // stops cursor jumping to input start
       const idx = Math.min(cmdIdx + 1, cmdHistory.length - 1);
       setCmdIdx(idx);
       setInput(cmdHistory[idx] || "");
     } else if (e.key === "ArrowDown") {
+      e.preventDefault();
       const idx = Math.max(cmdIdx - 1, -1);
       setCmdIdx(idx);
       setInput(idx === -1 ? "" : cmdHistory[idx] || "");
     } else if (e.key === "Tab") {
       e.preventDefault();
+      const trimmed = input.trim();
       const match = ALL_COMMANDS.find(
-        (c) => c.startsWith(input.trim()) && c !== input.trim(),
+        (c) => c.startsWith(trimmed) && c !== trimmed,
       );
       if (match) setInput(match);
     }
@@ -1391,7 +1491,6 @@ export default function Portfolio() {
           className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 rounded-t-[10px] border transition-colors duration-300"
           style={{ background: C.mantle, borderColor: C.surface1 }}
         >
-          {/* Traffic lights */}
           <div className="flex gap-1.5 flex-shrink-0">
             {[C.red, C.yellow, C.green].map((c) => (
               <div
@@ -1402,7 +1501,6 @@ export default function Portfolio() {
             ))}
           </div>
 
-          {/* Title — truncated on mobile */}
           <div className="flex-1 text-center min-w-0">
             <span
               className="text-[11px] md:text-[12px] truncate block"
@@ -1413,7 +1511,7 @@ export default function Portfolio() {
             </span>
           </div>
 
-          {/* Theme switcher — pills on md+, compact on mobile */}
+          {/* Theme switcher — focus-visible ring for keyboard nav */}
           <div className="flex gap-1 flex-shrink-0">
             {Object.keys(THEMES).map((t) => (
               <button
@@ -1422,14 +1520,14 @@ export default function Portfolio() {
                   e.stopPropagation();
                   setThemeName(t);
                 }}
-                className="px-1.5 md:px-2 py-[2px] rounded-[3px] text-[8px] md:text-[9px] cursor-pointer transition-all duration-200 border font-[inherit]"
+                className="px-1.5 md:px-2 py-[2px] rounded-[3px] text-[8px] md:text-[9px] cursor-pointer transition-all duration-200 border font-[inherit] focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={{
                   background: t === themeName ? C.mauve : "transparent",
                   borderColor: t === themeName ? C.mauve : C.surface1,
                   color: t === themeName ? C.base : C.overlay0,
+                  outlineColor: C.mauve,
                 }}
               >
-                {/* Abbreviated on mobile */}
                 <span className="hidden md:inline">{t}</span>
                 <span className="md:hidden">{t.slice(0, 2)}</span>
               </button>
@@ -1448,7 +1546,6 @@ export default function Portfolio() {
             maxHeight: "clamp(400px, 80vh, 700px)",
           }}
         >
-          {/* ASCII banner — only lg+ */}
           {booted && (
             <pre
               className="hidden lg:block m-0 mb-3 overflow-hidden whitespace-pre"
@@ -1462,7 +1559,6 @@ export default function Portfolio() {
             </pre>
           )}
 
-          {/* ── Boot sequence ── */}
           {!booted && (
             <div className="mb-4">
               {BOOT_LINES.slice(0, bootStep + 1).map((line, i) => (
@@ -1479,7 +1575,6 @@ export default function Portfolio() {
             </div>
           )}
 
-          {/* ── Post-boot UI ── */}
           {booted && (
             <>
               {showFetch && <Fastfetch C={C} />}
@@ -1490,8 +1585,9 @@ export default function Portfolio() {
               >
                 <p className="text-[11px]" style={{ color: C.overlay1 }}>
                   JULE-ETHAN-OS v1.0.0 LTS — Type{" "}
-                  <span style={{ color: C.blue }}>help</span>{" "}
+                  <span style={{ color: C.blue }}>help</span>
                   <span className="hidden sm:inline">
+                    {" "}
                     · theme{" "}
                     <span style={{ color: C.mauve }}>
                       latte|frappe|macchiato|mocha
@@ -1515,39 +1611,22 @@ export default function Portfolio() {
                 />
               ))}
 
-              {/* Input line */}
               <form
                 onSubmit={handleSubmit}
                 className="flex items-center gap-1 md:gap-1.5 flex-wrap pr-2"
               >
-                <span
-                  className="font-semibold text-[13px] flex-shrink-0"
-                  style={{ color: C.green }}
-                >
-                  jule
-                </span>
-                <span style={{ color: C.overlay0 }}>@</span>
-                <span
-                  className="font-semibold text-[13px] flex-shrink-0"
-                  style={{ color: C.blue }}
-                >
-                  portfolio
-                </span>
-                <span style={{ color: C.overlay0 }}>:</span>
-                <span
-                  className="text-[13px] flex-shrink-0"
-                  style={{ color: C.mauve }}
-                >
-                  ~
-                </span>
-                <span style={{ color: C.overlay0 }}>$</span>
+                <PromptPrefix C={C} />
                 <input
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   autoFocus
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
                   spellCheck={false}
+                  aria-label="Terminal input"
                   className="bg-transparent border-none outline-none flex-1 min-w-[60px] font-[inherit] text-[inherit]"
                   style={{ color: C.text, caretColor: C.mauve }}
                 />
@@ -1557,12 +1636,14 @@ export default function Portfolio() {
           <div ref={bottomRef} />
         </div>
 
-        {/* ── Footer hint ── */}
+        {/* Footer — tab autocomplete hint added */}
         <p
           className="text-[10px] text-center mt-2.5 font-[inherit]"
           style={{ color: C.overlay0 }}
         >
-          <span className="hidden md:inline">↑↓ navigate history · </span>
+          <span className="hidden md:inline">
+            ↑↓ history · tab autocomplete ·{" "}
+          </span>
           theme latte|frappe|macchiato|mocha
           <span className="hidden sm:inline">
             {" "}
