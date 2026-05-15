@@ -922,7 +922,7 @@ function ExperienceOutput({ C }) {
         $ cat experience.log
       </p>
       <div className="border-l-2 pl-4" style={{ borderColor: C.surface1 }}>
-        <div className="relative">
+        <div className="relative mb-4">
           <div
             className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full"
             style={{ background: C.teal }}
@@ -941,6 +941,41 @@ function ExperienceOutput({ C }) {
               "Created and managed spreadsheets for tracking data and calculations using Microsoft Excel.",
               "Processed documents, assisted visitors and clients, and performed accurate data entry.",
               "Supported IT-related tasks, including checking connections, testing components, and replacing faulty hardware.",
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="flex gap-2 mb-1.5 text-[12px] leading-[1.6]"
+                style={{ color: C.subtext1 }}
+              >
+                <span className="flex-shrink-0" style={{ color: C.green }}>
+                  ▸
+                </span>
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative">
+          <div
+            className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full"
+            style={{ background: C.blue }}
+          />
+          <p className="font-semibold text-[14px]" style={{ color: C.blue }}>
+            GIP (Government Internship Program)
+          </p>
+          <p className="text-[12px] mb-2" style={{ color: C.overlay1 }}>
+            LGU - Agoo · March 2026 – Present
+          </p>
+          <div
+            className="rounded-md border p-3"
+            style={{ background: C.mantle, borderColor: C.surface0 }}
+          >
+            {[
+              "Assisted in data encoding and management for various LGU projects and initiatives.",
+              "Provided technical support to LGU staff, troubleshooting hardware and software issues.",
+              "Contributed to the development and maintenance of internal LGU databases.",
+              "Participated in community outreach programs and administrative tasks as needed.",
             ].map((item, i) => (
               <div
                 key={i}
@@ -997,7 +1032,7 @@ function EducationOutput({ C }) {
               (c) => (
                 <span
                   key={c}
-                  className="px-2.5 py-0.75 rounded-[3px] text-[12px] border"
+                  className="px-2.5 py-[3px] rounded-[3px] text-[12px] border"
                   style={{
                     background: C.base,
                     borderColor: C.surface1,
@@ -1008,55 +1043,6 @@ function EducationOutput({ C }) {
                 </span>
               ),
             )}
-          </div>
-        </div>
-      </div>
-
-      {/* Added GIP for LGU - Agoo */}
-      <div
-        className="rounded-md border border-l-[3px] p-3.5 mt-4"
-        style={{
-          background: C.mantle,
-          borderColor: C.surface0,
-          borderLeftColor: C.blue,
-        }}
-      >
-        <div className="flex justify-between items-start flex-wrap gap-2">
-          <p className="font-semibold text-[14px]" style={{ color: C.blue }}>
-            Government Internship Program (GIP)
-          </p>
-          <span className="text-[12px]" style={{ color: C.peach }}>
-            March 2025 - Present
-          </span>
-        </div>
-        <p className="text-[13px] mt-1" style={{ color: C.subtext1 }}>
-          Local Government Unit of Agoo
-        </p>
-        <div className="mt-3">
-          <p
-            className="text-[11px] mb-1.5 tracking-wider uppercase"
-            style={{ color: C.overlay0 }}
-          >
-            Key Responsibilities
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              "Data Management",
-              "Public Assistance",
-              "Administrative Support",
-            ].map((r) => (
-              <span
-                key={r}
-                className="px-2.5 py-0.75 rounded-[3px] text-[12px] border"
-                style={{
-                  background: C.base,
-                  borderColor: C.surface1,
-                  color: C.subtext1,
-                }}
-              >
-                {r}
-              </span>
-            ))}
           </div>
         </div>
       </div>
