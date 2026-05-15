@@ -997,7 +997,7 @@ function EducationOutput({ C }) {
               (c) => (
                 <span
                   key={c}
-                  className="px-2.5 py-[3px] rounded-[3px] text-[12px] border"
+                  className="px-2.5 py-0.75 rounded-[3px] text-[12px] border"
                   style={{
                     background: C.base,
                     borderColor: C.surface1,
@@ -1008,6 +1008,55 @@ function EducationOutput({ C }) {
                 </span>
               ),
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Added GIP for LGU - Agoo */}
+      <div
+        className="rounded-md border border-l-[3px] p-3.5 mt-4"
+        style={{
+          background: C.mantle,
+          borderColor: C.surface0,
+          borderLeftColor: C.blue,
+        }}
+      >
+        <div className="flex justify-between items-start flex-wrap gap-2">
+          <p className="font-semibold text-[14px]" style={{ color: C.blue }}>
+            Government Internship Program (GIP)
+          </p>
+          <span className="text-[12px]" style={{ color: C.peach }}>
+            March 2025 - Present
+          </span>
+        </div>
+        <p className="text-[13px] mt-1" style={{ color: C.subtext1 }}>
+          Local Government Unit of Agoo
+        </p>
+        <div className="mt-3">
+          <p
+            className="text-[11px] mb-1.5 tracking-wider uppercase"
+            style={{ color: C.overlay0 }}
+          >
+            Key Responsibilities
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              "Data Management",
+              "Public Assistance",
+              "Administrative Support",
+            ].map((r) => (
+              <span
+                key={r}
+                className="px-2.5 py-0.75 rounded-[3px] text-[12px] border"
+                style={{
+                  background: C.base,
+                  borderColor: C.surface1,
+                  color: C.subtext1,
+                }}
+              >
+                {r}
+              </span>
+            ))}
           </div>
         </div>
       </div>
