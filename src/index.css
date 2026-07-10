@@ -1,32 +1,57 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 @theme {
-    /* Ultra-dark palette depth configurations */
-    --color-zinc-850: #1c1c21;
-    --color-zinc-950: #09090b;
+  /* Airbnb-spec palette — single accent (Rausch), near-black ink, no dark surfaces */
+  --color-canvas: #ffffff;
+  --color-ink: #222222;
+  --color-body: #3f3f3f;
+  --color-muted: #6a6a6a;
+  --color-muted-soft: #929292;
+  --color-hairline: #dddddd;
+  --color-hairline-soft: #ebebeb;
+  --color-border-strong: #c1c1c1;
+  --color-surface-soft: #f7f7f7;
+  --color-surface-strong: #f2f2f2;
+  --color-rausch: #ff385c;
+  --color-rausch-active: #e00b41;
+  --color-rausch-disabled: #ffd1da;
+
+  /* Font substitute per spec's "Note on Font Substitutes": Inter for Cereal/Circular */
+  --font-sans: "Inter", "Circular", -apple-system, system-ui, Roboto,
+    "Helvetica Neue", sans-serif;
+
+  /* Spec's soft shape language */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
+
+  /* The system's single shadow tier */
+  --shadow-airbnb: 0 0 0 1px rgba(0, 0, 0, 0.02), 0 2px 6px 0 rgba(0, 0, 0, 0.04),
+    0 4px 8px 0 rgba(0, 0, 0, 0.1);
 }
 
 @layer base {
-    html {
-        scroll-behavior: smooth;
-        background-color: var(--color-zinc-950);
-    }
-
-    /* High-fidelity custom scrollbar matching the dark/pink aesthetic */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: var(--color-zinc-950);
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: var(--color-zinc-800);
-        border-radius: 9999px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--color-pink-500);
-    }
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--color-canvas);
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-canvas);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-hairline);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-rausch);
+  }
 }
