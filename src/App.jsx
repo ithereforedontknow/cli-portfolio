@@ -1,707 +1,475 @@
-import { useState, useEffect } from "react";
-import {
-  Sun,
-  Moon,
-  Code as Github,
-  Mail,
-  Phone,
-  FileText,
-  ArrowUp,
-  ArrowRight,
-  ExternalLink,
-  Clock,
-  MapPin,
-  Award,
-  Cpu,
-} from "lucide-react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUpRight, ArrowUp, Mail, Phone, Code as Github } from "lucide-react";
+
+const THEMES = ["dark", "light", "pink"];
 
 const PROJECTS = [
   {
-    type: "Enterprise production system",
-    client: "Universal Leaf Philippines, Inc.",
-    title: "Online Vehicle Management System",
-    problem:
-      "Logistics team spent 15 hours weekly manually copying trip data between Excel sheets, causing data entry errors and delayed dispatches.",
-    solution:
-      "Built OVMS with state tracking (idle → dispatched → returned) and automated reporting.",
-    result:
-      "15 hours/week recovered — an estimated $7,800 annual savings, with zero data entry errors post-launch.",
-    keyDecision:
-      "Chose PHP + MySQL over Node.js due to existing company infrastructure and IT team familiarity.",
-    metrics: [
-      ["hours saved", "15+"],
-      ["records", "2,000+"],
-      ["error reduction", "100%"],
-    ],
-    stack: ["PHP", "MySQL", "HTML", "CSS", "JavaScript"],
-    github: "https://github.com/ithereforedontknow/ovms",
+    index: "01",
+    title: "San Fabian Barangay Portal",
+    year: "2026",
+    description:
+      "Multi-tenant e-governance platform serving all 34 barangays of San Fabian — barangay-scoped resident records, real-time document request tracking, and nightly off-site backups.",
+    tags: ["React", "TypeScript", "Node / Express", "PostgreSQL", "Docker"],
+    href: "https://github.com/ithereforedontknow/barangay-portal",
   },
   {
-    type: "Social platform MVP",
-    client: "Independent project",
-    title: "SpillTheBeans",
-    problem:
-      "No lightweight, privacy-focused discussion platform for niche communities tired of algorithm-driven feeds.",
-    solution:
-      "Built a full-stack social MVP with real-time posts, user auth, and zero trackers.",
-    result:
-      "50+ beta users in the first month, 200+ organic posts, deployed on the free tier with 99.9% uptime.",
-    keyDecision:
-      "Selected Appwrite over Firebase for better cost predictability and simpler React integration.",
-    metrics: [
-      ["users", "50+"],
-      ["posts", "200+"],
-      ["uptime", "99.9%"],
-    ],
-    stack: ["React", "Tailwind CSS", "Appwrite"],
-    github: "https://github.com/ithereforedontknow/spillthebeans",
+    index: "02",
+    title: "ClockIn/Out",
+    year: "2025",
+    description:
+      "HR platform with a built-in LMS — time tracking, approvals, and courses with auto-scored quizzes and generated PDF certificates, secured with row-level access rules.",
+    tags: ["React", "TypeScript", "Supabase", "TanStack Query"],
+    href: "https://github.com/ithereforedontknow/clockin-clockout",
+  },
+  {
+    index: "03",
+    title: "Photo Layout Pro",
+    year: "2025",
+    description:
+      "Guided photo-layout generator with three bin-packing algorithms reaching up to 95% sheet efficiency, plus a built-in print-cost calculator — all processed client-side.",
+    tags: ["React", "TypeScript", "jsPDF", "Tailwind CSS"],
+    href: "https://github.com/ithereforedontknow/printer-ni-ethan",
   },
 ];
 
-const TIMELINE = [
+const EXPERIENCE = [
   {
-    current: true,
-    date: "Jan 2026 — Present",
+    date: "March 2026 — Present",
     role: "Government Internship Program (GIP)",
     org: "LGU — Agoo, La Union",
-    bullets: [
-      ["2,000+ citizen records", " maintained with 99.9% data accuracy"],
-      [
-        "Technical support",
-        ": hardware troubleshooting and software deployment, reducing resolution time by 40%",
-      ],
-      ["Built internal tracking system", " that saved staff 8 hours/week"],
-    ],
+    detail:
+      "Maintaining 2,000+ citizen records at 99.9% accuracy, cutting IT support resolution time by 40%, and shipping an internal tracking tool that saves staff 8 hours a week.",
   },
   {
-    current: false,
     date: "Feb 2025 — May 2025",
     role: "Information Technology Intern",
     org: "COMELEC — Agoo, La Union",
-    bullets: [
-      ["Maintained tracking sheets", " for 500+ election operational data points"],
-      [
-        "Diagnostic hardware checks",
-        " and setup modifications under 48-hour deadlines",
-      ],
-      ["Reduced system downtime", " by 25% through proactive maintenance"],
-    ],
+    detail:
+      "Kept tracking sheets for 500+ election data points, ran hardware diagnostics under 48-hour deadlines, and cut system downtime by 25% through proactive maintenance.",
   },
 ];
 
-const FACTS = [
-  ["Focus", "Full-stack (PHP / React)"],
-  ["Based in", "Agoo, La Union, PH"],
-  ["Response time", "Within 24 hours"],
-  ["Currently", "Government Internship Program"],
-];
+/* ---------------------------------------------------------------------
+   RotatingText — from React Bits, ported as-is (JS + CSS variant).
+   Requires the "motion" package: npm install motion
+--------------------------------------------------------------------- */
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
 
-const TERMINAL_LINES = [
-  { text: "❯ whoami", cls: "term-prompt" },
-  { text: "jule_fontanilla — full-stack developer", cls: "term-muted" },
-  { text: "\u00A0", cls: "" },
-  { text: "❯ cat mission.txt", cls: "term-prompt" },
-  { text: '"find the manual, error-prone process', cls: "term-str" },
-  { text: 'and replace it with something that works."', cls: "term-str" },
-  { text: "\u00A0", cls: "" },
-  { text: "❯ ./status --check", cls: "term-prompt" },
-];
+const RotatingText = forwardRef((props, ref) => {
+  const {
+    texts,
+    transition = { type: "spring", damping: 25, stiffness: 300 },
+    initial = { y: "100%", opacity: 0 },
+    animate = { y: 0, opacity: 1 },
+    exit = { y: "-120%", opacity: 0 },
+    animatePresenceMode = "wait",
+    animatePresenceInitial = false,
+    rotationInterval = 2000,
+    staggerDuration = 0,
+    staggerFrom = "first",
+    loop = true,
+    auto = true,
+    splitBy = "characters",
+    onNext,
+    mainClassName,
+    splitLevelClassName,
+    elementLevelClassName,
+    ...rest
+  } = props;
 
-export default function Portfolio() {
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+
+  const splitIntoCharacters = (text) => {
+    if (typeof Intl !== "undefined" && Intl.Segmenter) {
+      const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+      return Array.from(segmenter.segment(text), (segment) => segment.segment);
+    }
+    return Array.from(text);
+  };
+
+  const elements = useMemo(() => {
+    const currentText = texts[currentTextIndex];
+    if (splitBy === "characters") {
+      const words = currentText.split(" ");
+      return words.map((word, i) => ({
+        characters: splitIntoCharacters(word),
+        needsSpace: i !== words.length - 1,
+      }));
+    }
+    if (splitBy === "words") {
+      return currentText.split(" ").map((word, i, arr) => ({
+        characters: [word],
+        needsSpace: i !== arr.length - 1,
+      }));
+    }
+    if (splitBy === "lines") {
+      return currentText.split("\n").map((line, i, arr) => ({
+        characters: [line],
+        needsSpace: i !== arr.length - 1,
+      }));
+    }
+    return currentText.split(splitBy).map((part, i, arr) => ({
+      characters: [part],
+      needsSpace: i !== arr.length - 1,
+    }));
+  }, [texts, currentTextIndex, splitBy]);
+
+  const getStaggerDelay = useCallback(
+    (index, totalChars) => {
+      const total = totalChars;
+      if (staggerFrom === "first") return index * staggerDuration;
+      if (staggerFrom === "last") return (total - 1 - index) * staggerDuration;
+      if (staggerFrom === "center") {
+        const center = Math.floor(total / 2);
+        return Math.abs(center - index) * staggerDuration;
+      }
+      if (staggerFrom === "random") {
+        const randomIndex = Math.floor(Math.random() * total);
+        return Math.abs(randomIndex - index) * staggerDuration;
+      }
+      return Math.abs(staggerFrom - index) * staggerDuration;
+    },
+    [staggerFrom, staggerDuration]
+  );
+
+  const handleIndexChange = useCallback(
+    (newIndex) => {
+      setCurrentTextIndex(newIndex);
+      if (onNext) onNext(newIndex);
+    },
+    [onNext]
+  );
+
+  const next = useCallback(() => {
+    const nextIndex =
+      currentTextIndex === texts.length - 1 ? (loop ? 0 : currentTextIndex) : currentTextIndex + 1;
+    if (nextIndex !== currentTextIndex) handleIndexChange(nextIndex);
+  }, [currentTextIndex, texts.length, loop, handleIndexChange]);
+
+  const previous = useCallback(() => {
+    const prevIndex =
+      currentTextIndex === 0 ? (loop ? texts.length - 1 : currentTextIndex) : currentTextIndex - 1;
+    if (prevIndex !== currentTextIndex) handleIndexChange(prevIndex);
+  }, [currentTextIndex, texts.length, loop, handleIndexChange]);
+
+  const jumpTo = useCallback(
+    (index) => {
+      const validIndex = Math.max(0, Math.min(index, texts.length - 1));
+      if (validIndex !== currentTextIndex) handleIndexChange(validIndex);
+    },
+    [texts.length, currentTextIndex, handleIndexChange]
+  );
+
+  const reset = useCallback(() => {
+    if (currentTextIndex !== 0) handleIndexChange(0);
+  }, [currentTextIndex, handleIndexChange]);
+
+  useImperativeHandle(ref, () => ({ next, previous, jumpTo, reset }), [next, previous, jumpTo, reset]);
+
+  useEffect(() => {
+    if (!auto) return;
+    const intervalId = setInterval(next, rotationInterval);
+    return () => clearInterval(intervalId);
+  }, [next, rotationInterval, auto]);
+
+  return (
+    <motion.span className={cn("text-rotate", mainClassName)} {...rest} layout transition={transition}>
+      <span className="text-rotate-sr-only">{texts[currentTextIndex]}</span>
+      <AnimatePresence mode={animatePresenceMode} initial={animatePresenceInitial}>
+        <motion.span
+          key={currentTextIndex}
+          className={cn(splitBy === "lines" ? "text-rotate-lines" : "text-rotate")}
+          layout
+          aria-hidden="true"
+        >
+          {elements.map((wordObj, wordIndex, array) => {
+            const previousCharsCount = array
+              .slice(0, wordIndex)
+              .reduce((sum, word) => sum + word.characters.length, 0);
+            return (
+              <span key={wordIndex} className={cn("text-rotate-word", splitLevelClassName)}>
+                {wordObj.characters.map((char, charIndex) => (
+                  <motion.span
+                    key={charIndex}
+                    initial={initial}
+                    animate={animate}
+                    exit={exit}
+                    transition={{
+                      ...transition,
+                      delay: getStaggerDelay(
+                        previousCharsCount + charIndex,
+                        array.reduce((sum, word) => sum + word.characters.length, 0)
+                      ),
+                    }}
+                    className={cn("text-rotate-element", elementLevelClassName)}
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+                {wordObj.needsSpace && <span className="text-rotate-space"> </span>}
+              </span>
+            );
+          })}
+        </motion.span>
+      </AnimatePresence>
+    </motion.span>
+  );
+});
+RotatingText.displayName = "RotatingText";
+
+export default function App() {
   const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
     const prefersLight =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: light)").matches;
+      window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
     setTheme(prefersLight ? "light" : "dark");
   }, []);
 
-  const toggleTheme = () =>
-    setTheme((t) => (t === "dark" ? "light" : "dark"));
-
-  const scrollToTop = () =>
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
-    <div className="app" data-theme={theme}>
-      <style>{`
-        :root {
-          --accent: #F55EF5;
-          --accent-soft: rgba(245, 94, 245, 0.12);
-          --accent-line: rgba(245, 94, 245, 0.35);
-          --term-green: #6EE7A8;
-          --term-blue: #7DD3FC;
-          --term-amber: #FBBF6E;
-          --radius-sm: 6px;
-          --radius-md: 10px;
-          --radius-lg: 16px;
-        }
-        .app[data-theme="dark"] {
-          --bg: #09090b;
-          --bg-grid-line: rgba(255,255,255,0.05);
-          --bg-grid-fade: rgba(9,9,11,0);
-          --surface: #131316;
-          --surface-2: #18181c;
-          --border: #26262b;
-          --border-soft: #1c1c20;
-          --text: #f4f4f5;
-          --text-muted: #9c9ca6;
-          --text-dim: #67676f;
-          --shadow: 0 8px 30px rgba(0,0,0,0.45);
-          --glow: rgba(245, 94, 245, 0.28);
-          color-scheme: dark;
-        }
-        .app[data-theme="light"] {
-          --bg: #fafafa;
-          --bg-grid-line: rgba(24,24,27,0.055);
-          --bg-grid-fade: rgba(250,250,250,0);
-          --surface: #ffffff;
-          --surface-2: #f4f4f6;
-          --border: #e6e6ea;
-          --border-soft: #ececef;
-          --text: #18181b;
-          --text-muted: #5b5b64;
-          --text-dim: #9494a0;
-          --shadow: 0 8px 30px rgba(24,24,27,0.08);
-          --glow: rgba(109, 94, 245, 0.16);
-          color-scheme: light;
-        }
-        .app * { box-sizing: border-box; }
-        .app {
-          position: relative;
-          min-height: 100vh;
-          background-color: var(--bg);
-          color: var(--text);
-          font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-          -webkit-font-smoothing: antialiased;
-          background-image:
-            linear-gradient(var(--bg-grid-line) 1px, transparent 1px),
-            linear-gradient(90deg, var(--bg-grid-line) 1px, transparent 1px);
-          background-size: 44px 44px;
-          background-position: -1px -1px;
-          transition: background-color 0.3s ease;
-        }
-        .app::before {
-          content: "";
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          background: radial-gradient(ellipse 900px 560px at 50% -8%, var(--glow), var(--bg-grid-fade) 70%);
-          z-index: 0;
-        }
-        .mono { font-family: "JetBrains Mono", "SF Mono", Menlo, monospace; }
-        .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
-
-        nav.topbar {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-          backdrop-filter: blur(14px) saturate(140%);
-          -webkit-backdrop-filter: blur(14px) saturate(140%);
-          background: color-mix(in srgb, var(--bg) 72%, transparent);
-          border-bottom: 1px solid var(--border-soft);
-        }
-        .topbar-inner { max-width: 1180px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-        .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); text-decoration: none; }
-        .brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); flex-shrink: 0; }
-        .brand-mono { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--text-dim); }
-        .nav-links { display: flex; align-items: center; gap: 28px; }
-        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 13.5px; font-weight: 500; font-family: "JetBrains Mono", monospace; letter-spacing: -0.01em; transition: color 0.15s ease; }
-        .nav-links a:hover { color: var(--text); }
-        .nav-right { display: flex; align-items: center; gap: 10px; }
-        .icon-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all 0.15s ease; }
-        .icon-btn:hover { color: var(--text); border-color: var(--accent-line); }
-        .btn { display: inline-flex; align-items: center; gap: 7px; padding: 0 16px; height: 36px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 600; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; font-family: "Inter", sans-serif; }
-        .btn-primary { background: var(--accent); color: #ffffff; box-shadow: 0 1px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02); }
-        .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
-        .btn-ghost { background: var(--surface); border-color: var(--border); color: var(--text); }
-        .btn-ghost:hover { border-color: var(--accent-line); color: var(--text); }
-
-        .hero { padding: 168px 0 96px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
-        .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px 5px 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-muted); margin-bottom: 22px; }
-        .eyebrow .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--term-green); position: relative; }
-        .eyebrow .pulse::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--term-green); opacity: 0.5; animation: pulse 2s ease-out infinite; }
-        @keyframes pulse { 0% { transform: scale(0.6); opacity: 0.6; } 100% { transform: scale(1.8); opacity: 0; } }
-        h1.headline { font-size: 52px; line-height: 1.06; letter-spacing: -0.03em; font-weight: 800; margin: 0 0 22px; color: var(--text); }
-        h1.headline .accent-text { color: var(--accent); }
-        p.bio { font-family: "JetBrains Mono", monospace; font-size: 14px; line-height: 1.75; color: var(--text-muted); max-width: 480px; margin: 0 0 32px; }
-        p.bio .hl { color: var(--text); }
-        .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 34px; }
-        .hero-meta { display: flex; gap: 22px; flex-wrap: wrap; }
-        .hero-meta-item { display: flex; align-items: center; gap: 7px; font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--text-dim); }
-        .hero-meta-item svg { width: 13px; height: 13px; }
-
-        .terminal-wrap { position: relative; }
-        .terminal-wrap::before { content: ""; position: absolute; inset: -30px; background: radial-gradient(circle at 60% 30%, var(--glow), transparent 65%); filter: blur(10px); z-index: -1; }
-        .terminal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
-        .terminal-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border-soft); background: var(--surface-2); }
-        .terminal-dots { display: flex; gap: 6px; }
-        .terminal-dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--border); }
-        .terminal-title { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--text-dim); }
-        .terminal-body { padding: 20px 22px 24px; font-family: "JetBrains Mono", monospace; font-size: 13px; line-height: 1.9; }
-        .term-line { opacity: 0; transform: translateY(4px); animation: termIn 0.45s ease forwards; }
-        .term-line:nth-child(1) { animation-delay: 0.15s; }
-        .term-line:nth-child(2) { animation-delay: 0.45s; }
-        .term-line:nth-child(3) { animation-delay: 0.7s; }
-        .term-line:nth-child(4) { animation-delay: 0.95s; }
-        .term-line:nth-child(5) { animation-delay: 1.25s; }
-        .term-line:nth-child(6) { animation-delay: 1.5s; }
-        .term-line:nth-child(7) { animation-delay: 1.75s; }
-        .term-line:nth-child(8) { animation-delay: 2.0s; }
-        .term-line:nth-child(9) { animation-delay: 2.3s; }
-        .term-line:nth-child(10) { animation-delay: 2.55s; }
-        .term-line:nth-child(11) { animation-delay: 2.8s; }
-        @keyframes termIn { to { opacity: 1; transform: translateY(0); } }
-        .term-prompt { color: var(--accent); }
-        .term-str { color: var(--term-green); }
-        .term-key { color: var(--term-blue); }
-        .term-ok { color: var(--term-green); }
-        .term-pending { color: var(--term-amber); }
-        .term-muted { color: var(--text-muted); }
-        .cursor { display: inline-block; width: 6px; height: 13px; background: var(--accent); margin-left: 4px; vertical-align: -2px; animation: blink 1s step-end infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        section.sec { padding: 76px 0; border-top: 1px solid var(--border-soft); position: relative; z-index: 1; }
-        .section-head { margin-bottom: 40px; }
-        .section-eyebrow { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
-        .section-eyebrow::before { content: "//"; color: var(--text-dim); }
-        h2.section-title { font-size: 30px; letter-spacing: -0.02em; font-weight: 700; margin: 0; color: var(--text); }
-
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
-        .stat-card { background: var(--surface); padding: 22px 20px; }
-        .stat-label { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
-        .stat-value { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
-
-        .projects-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .project-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 26px; display: flex; flex-direction: column; transition: border-color 0.2s ease, transform 0.2s ease; }
-        .project-card:hover { border-color: var(--accent-line); transform: translateY(-2px); }
-        .project-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
-        .project-type { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em; }
-        .project-client { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text-dim); background: var(--surface-2); border: 1px solid var(--border-soft); padding: 3px 9px; border-radius: 999px; }
-        .project-title { font-size: 20px; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 18px; }
-        .psr-row { display: flex; gap: 10px; padding: 10px 0; border-top: 1px dashed var(--border); }
-        .psr-row:first-of-type { border-top: none; }
-        .psr-label { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; width: 64px; flex-shrink: 0; padding-top: 2px; }
-        .psr-text { font-size: 13.5px; line-height: 1.6; color: var(--text-muted); }
-        .psr-row.result .psr-label { color: var(--accent); }
-        .psr-row.result .psr-text { color: var(--text); }
-        .key-decision { margin-top: 16px; padding: 12px 14px; background: var(--surface-2); border-radius: var(--radius-sm); border-left: 2px solid var(--accent); }
-        .key-decision-label { font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-        .key-decision-text { font-size: 12.5px; line-height: 1.6; color: var(--text-muted); }
-        .metrics-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0 16px; }
-        .metric-pill { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border-soft); padding: 5px 10px; border-radius: 999px; }
-        .metric-pill b { color: var(--text); font-weight: 600; }
-        .stack-row { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 20px; }
-        .stack-tag { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--text-muted); border: 1px solid var(--border); padding: 4px 9px; border-radius: var(--radius-sm); }
-        .project-links { display: flex; gap: 18px; padding-top: 16px; border-top: 1px solid var(--border-soft); margin-top: auto; }
-        .project-links a { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; text-decoration: none; color: var(--text-muted); }
-        .project-links a:hover { color: var(--text); }
-        .project-links a.primary { color: var(--accent); }
-        .project-links svg { width: 14px; height: 14px; }
-
-        .exp-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 56px; }
-        .timeline { position: relative; padding-left: 26px; }
-        .timeline::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 1px; background: var(--border); }
-        .tl-item { position: relative; margin-bottom: 34px; }
-        .tl-item:last-child { margin-bottom: 0; }
-        .tl-dot { position: absolute; left: -26px; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--bg); border: 2px solid var(--border); }
-        .tl-item.current .tl-dot { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
-        .tl-date { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--text-dim); }
-        .tl-item.current .tl-date { color: var(--accent); }
-        .tl-role { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin: 4px 0 2px; }
-        .tl-org { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
-        .tl-list { margin: 0; padding: 0; list-style: none; }
-        .tl-list li { font-size: 13.5px; line-height: 1.65; color: var(--text-muted); padding-left: 16px; position: relative; margin-bottom: 6px; }
-        .tl-list li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); font-size: 11px; top: 3px; }
-        .tl-list b { color: var(--text); font-weight: 600; }
-
-        .skill-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 16px; }
-        .skill-panel.core { border-color: var(--accent-line); background: linear-gradient(180deg, var(--accent-soft), transparent 60%); }
-        .skill-panel-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; margin-bottom: 14px; }
-        .skill-panel-head svg { width: 15px; height: 15px; color: var(--accent); }
-        .skill-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-        .skill-tag { font-family: "JetBrains Mono", monospace; font-size: 12px; padding: 6px 11px; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--border); color: var(--text); }
-        .skill-panel.core .skill-tag { background: var(--surface); border-color: var(--accent-line); color: var(--accent); }
-        .skill-note { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--text-dim); margin-top: 14px; font-style: italic; }
-
-        footer.foot { padding: 76px 0 0; position: relative; z-index: 1; }
-        .footer-cta { max-width: 560px; margin-bottom: 48px; }
-        .footer-cta h3 { font-size: 24px; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 10px; }
-        .footer-cta p { font-size: 14px; color: var(--text-muted); margin: 0; line-height: 1.6; }
-        .footer-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; padding-bottom: 40px; border-bottom: 1px solid var(--border-soft); }
-        .footer-col-title { font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
-        .footer-link { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; }
-        .footer-link:hover { color: var(--text); }
-        .footer-link svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
-        .legal-band { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--text-dim); flex-wrap: wrap; gap: 10px; }
-        .legal-band button { background: none; border: none; color: var(--text-dim); font-family: "JetBrains Mono", monospace; font-size: 11.5px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .legal-band button:hover { color: var(--text); }
-
-        @media (max-width: 900px) {
-          .hero { grid-template-columns: 1fr; padding-top: 128px; gap: 44px; }
-          h1.headline { font-size: 38px; }
-          .projects-grid { grid-template-columns: 1fr; }
-          .exp-grid { grid-template-columns: 1fr; gap: 44px; }
-          .stats-grid { grid-template-columns: repeat(2, 1fr); }
-          .footer-cols { grid-template-columns: 1fr; gap: 26px; }
-          .nav-links { display: none; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .cursor, .eyebrow .pulse::after, .term-line { animation: none !important; opacity: 1 !important; transform: none !important; }
-        }
-      `}</style>
-
-      <nav className="topbar">
-        <div className="topbar-inner">
-          <a href="#" className="brand">
-            <span className="brand-dot" />
-            Jule Ethan <span className="brand-mono">/fontanilla</span>
+    <div data-theme={theme} className="min-h-screen bg-bg text-ink font-sans antialiased transition-colors duration-300">
+      {/* NAV */}
+      <nav className="sticky top-0 z-30 bg-bg/95 backdrop-blur border-b border-hairline">
+        <div className="max-w-5xl mx-auto px-8 h-20 flex items-center justify-between">
+          <a href="#" className="font-semibold text-lg tracking-tight text-ink">
+            Jule Ethan Fontanilla
           </a>
-          <div className="nav-links">
-            <a href="#projects">projects</a>
-            <a href="#experience">experience</a>
-            <a href="#skills">skills</a>
-            <a href="#contact">contact</a>
+          <div className="hidden md:flex items-center gap-9 font-mono text-sm text-muted">
+            <a href="#work" className="hover:text-ink transition-colors">work</a>
+            <a href="#about" className="hover:text-ink transition-colors">about</a>
+            <a href="#contact" className="hover:text-ink transition-colors">contact</a>
           </div>
-          <div className="nav-right">
-            <button
-              className="icon-btn"
-              onClick={toggleTheme}
-              aria-label="Toggle color theme"
-              title="Toggle theme"
-            >
-              {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
-            <a
-              className="btn btn-ghost"
-              href="https://github.com/ithereforedontknow"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Github size={14} />
-              GitHub
-            </a>
+          <div className="flex items-center gap-2.5">
+            {THEMES.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTheme(t)}
+                aria-label={`Switch to ${t} theme`}
+                title={t}
+                className={cn(
+                  "w-4 h-4 rounded-full border border-hairline",
+                  t === "dark" && "bg-[#0e0e10]",
+                  t === "light" && "bg-[#fafaf8]",
+                  t === "pink" && "bg-[#ff4fa0]",
+                  theme === t && "ring-2 ring-ink ring-offset-2 ring-offset-bg"
+                )}
+              />
+            ))}
           </div>
         </div>
       </nav>
 
-      <div className="wrap">
-        {/* HERO */}
-        <section className="hero" style={{ borderTop: "none", paddingTop: 168 }}>
-          <div>
-            <div className="eyebrow">
-              <span className="pulse" />
-              open for select contracts &amp; full-stack roles
-            </div>
-            <h1 className="headline">
-              Hi, I'm Jule —
-              <br />
-              building fast,
-              <br />
-              <span className="accent-text">reliable tools</span> for slow
-              processes.
-            </h1>
-            <p className="bio">
-              <span className="hl">$ whoami</span>
-              <br />
-              BS Information Technology, Saint Louis College '25. Full-stack
-              developer based in <span className="hl">Agoo, La Union, PH</span>.
-              Daily drivers: PHP, MySQL, React. Actively shipping in
-              TypeScript, Node.js, Next.js and Docker. Currently serving a
-              Government Internship Program while building production tools
-              on the side.
-            </p>
-            <div className="hero-ctas">
-              <a href="#projects" className="btn btn-primary">
-                View measurable impact
-                <ArrowRight size={14} />
-              </a>
-              <a href="#contact" className="btn btn-ghost">
-                Request portfolio audit
-              </a>
-            </div>
-            <div className="hero-meta">
-              <div className="hero-meta-item">
-                <Clock size={13} />
-                Response within 24h
-              </div>
-              <div className="hero-meta-item">
-                <MapPin size={13} />
-                Agoo, La Union, PH
-              </div>
-            </div>
-          </div>
+      {/* HERO */}
+      <section className="max-w-5xl mx-auto px-8 pt-28 md:pt-36 pb-28 md:pb-32">
+        <p className="flex items-center gap-2.5 font-mono text-sm text-dim tracking-wide mb-9">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+          </span>
+          FULL-STACK DEVELOPER — AGOO, PHILIPPINES
+        </p>
 
-          <div className="terminal-wrap">
-            <div className="terminal">
-              <div className="terminal-bar">
-                <div className="terminal-dots">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-                <div className="terminal-title">jule@devbox — zsh</div>
-                <div style={{ width: 40 }} />
-              </div>
-              <div className="terminal-body">
-                {TERMINAL_LINES.map((line, i) => (
-                  <div className={`term-line ${line.cls}`} key={i}>
-                    {line.text}
-                  </div>
-                ))}
-                <div className="term-line">
-                  <span className="term-ok">[✓]</span>{" "}
-                  <span className="term-key">2,000+</span> records managed
-                </div>
-                <div className="term-line">
-                  <span className="term-ok">[✓]</span>{" "}
-                  <span className="term-key">15hrs</span>/week saved for
-                  logistics
-                </div>
-                <div className="term-line">
-                  <span className="term-pending">[…]</span> shipping next.js
-                  migration
-                  <span className="cursor" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <h1 className="text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight leading-[0.96] mb-10 max-w-4xl">
+          I build software
+          <br />
+          for{" "}
+          <RotatingText
+            texts={["barangays.", "HR teams.", "print shops."]}
+            mainClassName="inline-flex text-accent"
+            staggerFrom="last"
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "-120%", opacity: 0 }}
+            staggerDuration={0.02}
+            transition={{ type: "spring", damping: 28, stiffness: 380 }}
+            rotationInterval={2200}
+          />
+        </h1>
 
-        {/* STATS */}
-        <section
-          className="sec"
-          style={{ paddingTop: 0, paddingBottom: 0, borderTop: "none" }}
-        >
-          <div className="stats-grid">
-            {FACTS.map(([label, value]) => (
-              <div className="stat-card" key={label}>
-                <div className="stat-label">{label}</div>
-                <div className="stat-value">{value}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <p className="text-xl md:text-2xl text-muted max-w-2xl leading-relaxed mb-12">
+          Jule Ethan Fontanilla. Three production systems shipped this year —
+          a multi-tenant e-governance platform, an HR/LMS suite, and a client
+          photo-layout tool. React, TypeScript, Node, PostgreSQL, end to end.
+        </p>
 
-        {/* PROJECTS */}
-        <section id="projects" className="sec">
-          <div className="section-head">
-            <p className="section-eyebrow">measurable outcomes</p>
-            <h2 className="section-title">
+        <div className="flex flex-wrap gap-9">
+          <a
+            href="#work"
+            className="inline-flex items-center gap-1.5 text-base font-medium text-ink border-b border-ink pb-1 hover:opacity-70 transition-opacity"
+          >
+            View work <ArrowUpRight className="w-4 h-4" />
+          </a>
+          <a
+            href="#contact"
+            className="inline-flex items-center gap-1.5 text-base font-medium text-muted border-b border-hairline pb-1 hover:text-ink hover:border-ink transition-colors"
+          >
+            Get in touch <ArrowUpRight className="w-4 h-4" />
+          </a>
+        </div>
+      </section>
+
+      {/* WORK */}
+      <section id="work" className="relative overflow-hidden border-t border-hairline">
+        <span className="pointer-events-none select-none absolute -top-10 right-8 font-mono font-semibold text-[260px] leading-none text-ink opacity-[0.045]">
+          01
+        </span>
+        <div className="max-w-5xl mx-auto px-8 py-28 md:py-36">
+          <div className="mb-16">
+            <p className="font-mono text-sm text-accent tracking-wide mb-3">selected work</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
               Impact delivered, not just code written.
             </h2>
           </div>
-          <div className="projects-grid">
-            {PROJECTS.map((p) => (
-              <div className="project-card" key={p.title}>
-                <div className="project-top">
-                  <span className="project-type">{p.type}</span>
-                  <span className="project-client">{p.client}</span>
-                </div>
-                <h3 className="project-title">{p.title}</h3>
 
-                <div className="psr-row">
-                  <div className="psr-label">Problem</div>
-                  <div className="psr-text">{p.problem}</div>
-                </div>
-                <div className="psr-row">
-                  <div className="psr-label">Solution</div>
-                  <div className="psr-text">{p.solution}</div>
-                </div>
-                <div className="psr-row result">
-                  <div className="psr-label">Result</div>
-                  <div className="psr-text">{p.result}</div>
-                </div>
-
-                <div className="key-decision">
-                  <div className="key-decision-label">Key decision</div>
-                  <div className="key-decision-text">{p.keyDecision}</div>
-                </div>
-
-                <div className="metrics-row">
-                  {p.metrics.map(([k, v]) => (
-                    <span className="metric-pill" key={k}>
-                      {k}: <b>{v}</b>
-                    </span>
-                  ))}
-                </div>
-                <div className="stack-row">
-                  {p.stack.map((s) => (
-                    <span className="stack-tag" key={s}>
-                      {s}
-                    </span>
-                  ))}
-                </div>
-                <div className="project-links">
-                  <a href={p.github} target="_blank" rel="noreferrer">
-                    <Github size={14} />
-                    View code
-                  </a>
+          <div>
+            {PROJECTS.map((p, i) => (
+              <div
+                key={p.title}
+                className={cn(
+                  "grid grid-cols-[56px_1fr] gap-6 py-10",
+                  i !== 0 && "border-t border-hairline"
+                )}
+              >
+                <div className="font-mono text-base text-dim pt-1">{p.index}</div>
+                <div>
+                  <div className="flex items-baseline justify-between gap-4 flex-wrap mb-3">
+                    <h3 className="text-2xl md:text-3xl font-bold tracking-tight">{p.title}</h3>
+                    <span className="font-mono text-sm text-dim">{p.year}</span>
+                  </div>
+                  <p className="text-base md:text-lg text-muted max-w-2xl leading-relaxed mb-5">
+                    {p.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2.5 mb-5">
+                    {p.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="font-mono text-sm text-muted border border-hairline rounded px-3 py-1.5"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
                   <a
-                    className="primary"
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
+                    href={p.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-base font-medium text-ink hover:opacity-70 transition-opacity"
                   >
-                    <ExternalLink size={14} />
-                    Live demo
+                    View code <ArrowUpRight className="w-4 h-4" />
                   </a>
                 </div>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* EXPERIENCE + SKILLS */}
-        <section id="experience" className="sec">
-          <div className="exp-grid">
-            <div>
-              <div className="section-head">
-                <p className="section-eyebrow">verified track record</p>
-                <h2 className="section-title" style={{ fontSize: 26 }}>
-                  Professional timeline
-                </h2>
+      {/* ABOUT / EXPERIENCE + SKILLS */}
+      <section id="about" className="relative overflow-hidden border-t border-hairline">
+        <span className="pointer-events-none select-none absolute -top-10 right-8 font-mono font-semibold text-[260px] leading-none text-ink opacity-[0.045]">
+          02
+        </span>
+        <div className="max-w-5xl mx-auto px-8 py-28 md:py-36">
+          <div className="mb-16">
+            <p className="font-mono text-sm text-accent tracking-wide mb-3">background</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Professional timeline</h2>
+          </div>
+
+          <div>
+            {EXPERIENCE.map((e, i) => (
+              <div
+                key={e.role}
+                className={cn(
+                  "grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-3 sm:gap-8 py-10",
+                  i !== 0 && "border-t border-hairline"
+                )}
+              >
+                <div className="font-mono text-sm text-dim pt-1">{e.date}</div>
+                <div>
+                  <h3 className="text-xl md:text-2xl font-bold tracking-tight mb-1">{e.role}</h3>
+                  <p className="text-base text-dim mb-3">{e.org}</p>
+                  <p className="text-base md:text-lg text-muted leading-relaxed">{e.detail}</p>
+                </div>
               </div>
-              <div className="timeline">
-                {TIMELINE.map((item) => (
-                  <div
-                    className={`tl-item ${item.current ? "current" : ""}`}
-                    key={item.role}
-                  >
-                    <div className="tl-dot" />
-                    <div className="tl-date">{item.date}</div>
-                    <div className="tl-role">{item.role}</div>
-                    <div className="tl-org">{item.org}</div>
-                    <ul className="tl-list">
-                      {item.bullets.map(([bold, rest], i) => (
-                        <li key={i}>
-                          <b>{bold}</b>
-                          {rest}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+            ))}
+          </div>
+
+          <div className="mt-16 pt-12 border-t border-hairline space-y-5">
+            <div className="flex flex-wrap items-baseline gap-3">
+              <span className="font-mono text-sm text-dim min-w-[92px]">Core</span>
+              <div className="flex flex-wrap gap-x-2 gap-y-2">
+                {["React", "TypeScript", "Node.js / Express", "PostgreSQL", "Docker", "Tailwind CSS"].map(
+                  (s, i, arr) => (
+                    <span key={s} className="text-base text-ink">
+                      {s}
+                      {i !== arr.length - 1 && <span className="text-dim ml-2">·</span>}
+                    </span>
+                  )
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-baseline gap-3">
+              <span className="font-mono text-sm text-dim min-w-[92px]">Exploring</span>
+              <div className="flex flex-wrap gap-x-2 gap-y-2">
+                {["Next.js", "Supabase", "Drizzle ORM", "Socket.IO"].map((s, i, arr) => (
+                  <span key={s} className="text-base text-ink">
+                    {s}
+                    {i !== arr.length - 1 && <span className="text-dim ml-2">·</span>}
+                  </span>
                 ))}
               </div>
             </div>
-
-            <div id="skills">
-              <div className="section-head">
-                <p className="section-eyebrow">technical proficiency</p>
-                <h2 className="section-title" style={{ fontSize: 26 }}>
-                  Core vs. familiar stack
-                </h2>
-              </div>
-
-              <div className="skill-panel core">
-                <div className="skill-panel-head">
-                  <Award size={15} />
-                  Production-ready (daily drivers)
-                </div>
-                <div className="skill-tags">
-                  {["PHP", "MySQL", "JavaScript", "React", "Tailwind CSS", "Git"].map(
-                    (s) => (
-                      <span className="skill-tag" key={s}>
-                        {s}
-                      </span>
-                    )
-                  )}
-                </div>
-              </div>
-
-              <div className="skill-panel">
-                <div className="skill-panel-head">
-                  <Cpu size={15} />
-                  Familiar (actively mastering)
-                </div>
-                <div className="skill-tags">
-                  {["Appwrite", "Node.js", "TypeScript", "Next.js", "Docker"].map(
-                    (s) => (
-                      <span className="skill-tag" key={s}>
-                        {s}
-                      </span>
-                    )
-                  )}
-                </div>
-                <div className="skill-note">
-                  currently building with: Appwrite + React → live project in
-                  beta
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* FOOTER */}
-      <footer id="contact" className="foot">
-        <div
-          className="wrap"
-          style={{ borderTop: "1px solid var(--border-soft)", paddingTop: 76 }}
-        >
-          <div className="footer-cta">
-            <h3>
-              Seeking full-stack roles (remote / La Union) or freelance web
-              builds.
-            </h3>
-            <p>
-              Ready to audit your current logistics dashboard or build your
-              MVP from scratch. Response within 24 hours.
-            </p>
-          </div>
-
-          <div className="footer-cols">
-            <div>
-              <div className="footer-col-title">Contact</div>
-              <a className="footer-link" href="mailto:juleethan@gmail.com">
-                <Mail size={14} />
-                juleethan@gmail.com
-              </a>
-              <a className="footer-link" href="tel:+639193694589">
-                <Phone size={14} />
-                +63 919 369 4589
-              </a>
-            </div>
-            <div>
-              <div className="footer-col-title">Elsewhere</div>
-              <a
-                className="footer-link"
-                href="https://github.com/ithereforedontknow"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Github size={14} />
-                GitHub
-              </a>
-            </div>
-            <div>
-              <div className="footer-col-title">Resume</div>
-              <a
-                className="footer-link"
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert(
-                    "Resume PDF would download here. In production, link to the actual /resume.pdf"
-                  );
-                }}
-              >
-                <FileText size={14} />
-                Download resume (PDF)
-              </a>
-            </div>
-          </div>
-
-          <div className="legal-band">
-            <p style={{ margin: 0 }}>
-              © {new Date().getFullYear()} Jule Ethan Fontanilla • Full-stack
-              developer
-            </p>
-            <button onClick={scrollToTop}>
-              Back to top
-              <ArrowUp size={13} />
-            </button>
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* FOOTER */}
+        <footer id="contact" className="relative overflow-hidden border-t border-hairline">
+              <span className="pointer-events-none select-none absolute -top-10 right-8 font-mono font-semibold text-[260px] leading-none text-ink opacity-[0.045]">
+                03
+              </span>
+
+              <div className="max-w-5xl mx-auto px-8 pt-28 md:pt-36 pb-14">
+                <div className="mb-16 max-w-2xl">
+                  <h3 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                    Seeking full-stack roles or freelance web builds.
+                  </h3>
+                  <p className="text-lg text-muted leading-relaxed">
+                    Ready to audit your current system or build your MVP from scratch. Response within 24 hours.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-10 mb-20">
+                  <a href="mailto:juleethan@gmail.com" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity">
+                    <Mail className="w-[18px] h-[18px] text-dim" /> juleethan@gmail.com
+                  </a>
+                  <a href="tel:+639193694589" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity">
+                    <Phone className="w-[18px] h-[18px] text-dim" /> +63 919 369 4589
+                  </a>
+                  <a
+                    href="https://github.com/ithereforedontknow"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity"
+                  >
+                    <Github className="w-[18px] h-[18px] text-dim" /> GitHub
+                  </a>
+                </div>
+
+                <div className="flex items-center justify-between flex-wrap gap-3 pt-8 border-t border-hairline font-mono text-sm text-dim">
+                  <p className="m-0">© {new Date().getFullYear()} Jule Ethan Fontanilla</p>
+                  <button onClick={scrollToTop} className="flex items-center gap-1.5 hover:text-ink transition-colors">
+                    Back to top <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+        </footer>
     </div>
   );
 }

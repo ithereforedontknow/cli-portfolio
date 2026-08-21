@@ -1,57 +1,92 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap");
 
 @theme {
-  /* Airbnb-spec palette — single accent (Rausch), near-black ink, no dark surfaces */
-  --color-canvas: #ffffff;
-  --color-ink: #222222;
-  --color-body: #3f3f3f;
-  --color-muted: #6a6a6a;
-  --color-muted-soft: #929292;
-  --color-hairline: #dddddd;
-  --color-hairline-soft: #ebebeb;
-  --color-border-strong: #c1c1c1;
-  --color-surface-soft: #f7f7f7;
-  --color-surface-strong: #f2f2f2;
-  --color-rausch: #ff385c;
-  --color-rausch-active: #e00b41;
-  --color-rausch-disabled: #ffd1da;
+  /* Base tokens — actual values are set per data-theme below.
+     These just register the names so Tailwind generates bg-bg, text-ink,
+     text-muted, text-dim, border-hairline, text-accent / bg-accent, etc. */
+  --color-bg: #0e0e10;
+  --color-ink: #f2f2f0;
+  --color-muted: #9c9c9c;
+  --color-dim: #6b6b6b;
+  --color-hairline: #232325;
+  --color-accent: #ff4d8d;
 
-  /* Font substitute per spec's "Note on Font Substitutes": Inter for Cereal/Circular */
-  --font-sans: "Inter", "Circular", -apple-system, system-ui, Roboto,
+  --font-sans: "IBM Plex Sans", -apple-system, system-ui, Roboto,
     "Helvetica Neue", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Spec's soft shape language */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 32px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+}
 
-  /* The system's single shadow tier */
-  --shadow-airbnb: 0 0 0 1px rgba(0, 0, 0, 0.02), 0 2px 6px 0 rgba(0, 0, 0, 0.04),
-    0 4px 8px 0 rgba(0, 0, 0, 0.1);
+/* Runtime theme switch — set data-theme="dark" | "light" | "pink" on the
+   app root. Overrides the same custom properties Tailwind's @theme block
+   above already exposes, so bg-bg / text-ink / etc. just work. */
+[data-theme="dark"] {
+  --color-bg: #0e0e10;
+  --color-ink: #f2f2f0;
+  --color-muted: #9c9c9c;
+  --color-dim: #6b6b6b;
+  --color-hairline: #232325;
+  --color-accent: #ff4d8d;
+}
+[data-theme="light"] {
+  --color-bg: #fafaf8;
+  --color-ink: #121210;
+  --color-muted: #5b5b58;
+  --color-dim: #9c9c97;
+  --color-hairline: #e4e4e0;
+  --color-accent: #ff3e82;
+}
+[data-theme="pink"] {
+  --color-bg: #ff4fa0;
+  --color-ink: #17111a;
+  --color-muted: rgba(23, 17, 26, 0.64);
+  --color-dim: rgba(23, 17, 26, 0.42);
+  --color-hairline: rgba(23, 17, 26, 0.16);
+  --color-accent: #17111a;
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
-    background-color: var(--color-canvas);
   }
   body {
     font-family: var(--font-sans);
   }
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: var(--color-canvas);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-hairline);
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-rausch);
-  }
+}
+
+/* RotatingText (React Bits) structural CSS — layout only, colors/sizing
+   are passed in via mainClassName from the component using it. */
+.text-rotate {
+  display: flex;
+  flex-wrap: wrap;
+  white-space: pre-wrap;
+  position: relative;
+}
+.text-rotate-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.text-rotate-word {
+  display: inline-flex;
+}
+.text-rotate-lines {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.text-rotate-element {
+  display: inline-block;
+}
+.text-rotate-space {
+  white-space: pre;
 }
