@@ -275,11 +275,14 @@ export default function App() {
         </p>
 
         <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] sm:leading-[0.96] mb-8 sm:mb-10 max-w-4xl">
-          I build software
-          <br />
-          for{" "}
+          I make
           <RotatingText
-            texts={["barangays.", "HR teams.", "print shops."]}
+          texts={[
+              "websites.",
+              "systems.",
+              "it work.",
+              "things good."
+            ]}
             mainClassName="inline-flex text-accent"
             staggerFrom="last"
             initial={{ y: "100%", opacity: 0 }}
@@ -292,11 +295,9 @@ export default function App() {
         </h1>
 
         <p className="text-lg sm:text-xl md:text-2xl text-muted max-w-2xl leading-relaxed mb-10 sm:mb-12">
-          Jule Ethan Fontanilla. Three production systems shipped this year —
-          a multi-tenant e-governance platform, an HR/LMS suite, and a client
-          photo-layout tool. React, TypeScript, Node, PostgreSQL, end to end.
-        </p>
+          Hey, I'm Jule Ethan. Full-stack developer focused on simple, high-performance web software that makes work easier.
 
+        </p>
         <div className="flex flex-wrap gap-6 sm:gap-9">
           <a
             href="#work"
