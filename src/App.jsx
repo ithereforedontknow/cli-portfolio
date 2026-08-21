@@ -7,12 +7,12 @@ const THEMES = ["dark", "light", "pink"];
 const PROJECTS = [
   {
     index: "01",
-    title: "San Fabian Barangay Portal",
+    title: "Spill the Beans",
     year: "2026",
     description:
-      "Multi-tenant e-governance platform serving all 34 barangays of San Fabian — barangay-scoped resident records, real-time document request tracking, and nightly off-site backups.",
-    tags: ["React", "TypeScript", "Node / Express", "PostgreSQL", "Docker"],
-    href: "https://github.com/ithereforedontknow/barangay-portal",
+      "Find cafes built for deep work. Rated by remote workers on WiFi, power, noise, and more.",
+    tags: ["React", "TypeScript","Supabase", "TanStack Query"],
+    href: "https://github.com/ithereforedontknow/spillthebeans",
   },
   {
     index: "02",
@@ -21,7 +21,7 @@ const PROJECTS = [
     description:
       "HR platform with a built-in LMS — time tracking, approvals, and courses with auto-scored quizzes and generated PDF certificates, secured with row-level access rules.",
     tags: ["React", "TypeScript", "Supabase", "TanStack Query"],
-    href: "https://github.com/ithereforedontknow/clockin-clockout",
+    href: "https://github.com/ithereforedontknow/clockinout",
   },
   {
     index: "03",
@@ -30,13 +30,13 @@ const PROJECTS = [
     description:
       "Guided photo-layout generator with three bin-packing algorithms reaching up to 95% sheet efficiency, plus a built-in print-cost calculator — all processed client-side.",
     tags: ["React", "TypeScript", "jsPDF", "Tailwind CSS"],
-    href: "https://github.com/ithereforedontknow/printer-ni-ethan",
+    href: "https://github.com/ithereforedontknow/photo-layout-pro",
   },
 ];
 
 const EXPERIENCE = [
   {
-    date: "March 2026 — Present",
+    date: "Jan 2026 — Present",
     role: "Government Internship Program (GIP)",
     org: "LGU — Agoo, La Union",
     detail:
@@ -53,7 +53,6 @@ const EXPERIENCE = [
 
 /* ---------------------------------------------------------------------
    RotatingText — from React Bits, ported as-is (JS + CSS variant).
-   Requires the "motion" package: npm install motion
 --------------------------------------------------------------------- */
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -233,19 +232,19 @@ export default function App() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
-    <div data-theme={theme} className="min-h-screen bg-bg text-ink font-sans antialiased transition-colors duration-300">
+    <div data-theme={theme} className="min-h-screen bg-bg text-ink font-sans antialiased transition-colors duration-300 overflow-x-hidden">
       {/* NAV */}
       <nav className="sticky top-0 z-30 bg-bg/95 backdrop-blur border-b border-hairline">
-        <div className="max-w-5xl mx-auto px-8 h-20 flex items-center justify-between">
-          <a href="#" className="font-semibold text-lg tracking-tight text-ink">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 h-16 sm:h-20 flex items-center justify-between">
+          <a href="#" className="font-semibold text-base sm:text-lg tracking-tight text-ink truncate mr-4">
             Jule Ethan Fontanilla
           </a>
-          <div className="hidden md:flex items-center gap-9 font-mono text-sm text-muted">
+          <div className="hidden md:flex items-center gap-8 font-mono text-sm text-muted">
             <a href="#work" className="hover:text-ink transition-colors">work</a>
             <a href="#about" className="hover:text-ink transition-colors">about</a>
             <a href="#contact" className="hover:text-ink transition-colors">contact</a>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 shrink-0">
             {THEMES.map((t) => (
               <button
                 key={t}
@@ -266,8 +265,8 @@ export default function App() {
       </nav>
 
       {/* HERO */}
-      <section className="max-w-5xl mx-auto px-8 pt-28 md:pt-36 pb-28 md:pb-32">
-        <p className="flex items-center gap-2.5 font-mono text-sm text-dim tracking-wide mb-9">
+      <section className="max-w-5xl mx-auto px-6 sm:px-8 pt-20 sm:pt-28 md:pt-36 pb-20 sm:pb-28 md:pb-32">
+        <p className="flex items-center gap-2.5 font-mono text-xs sm:text-sm text-dim tracking-wide mb-6 sm:mb-9">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
@@ -275,7 +274,7 @@ export default function App() {
           FULL-STACK DEVELOPER — AGOO, PHILIPPINES
         </p>
 
-        <h1 className="text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight leading-[0.96] mb-10 max-w-4xl">
+        <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.05] sm:leading-[0.96] mb-8 sm:mb-10 max-w-4xl">
           I build software
           <br />
           for{" "}
@@ -292,13 +291,13 @@ export default function App() {
           />
         </h1>
 
-        <p className="text-xl md:text-2xl text-muted max-w-2xl leading-relaxed mb-12">
+        <p className="text-lg sm:text-xl md:text-2xl text-muted max-w-2xl leading-relaxed mb-10 sm:mb-12">
           Jule Ethan Fontanilla. Three production systems shipped this year —
           a multi-tenant e-governance platform, an HR/LMS suite, and a client
           photo-layout tool. React, TypeScript, Node, PostgreSQL, end to end.
         </p>
 
-        <div className="flex flex-wrap gap-9">
+        <div className="flex flex-wrap gap-6 sm:gap-9">
           <a
             href="#work"
             className="inline-flex items-center gap-1.5 text-base font-medium text-ink border-b border-ink pb-1 hover:opacity-70 transition-opacity"
@@ -316,13 +315,13 @@ export default function App() {
 
       {/* WORK */}
       <section id="work" className="relative overflow-hidden border-t border-hairline">
-        <span className="pointer-events-none select-none absolute -top-10 right-8 font-mono font-semibold text-[260px] leading-none text-ink opacity-[0.045]">
+        <span className="pointer-events-none select-none absolute -top-6 sm:-top-10 right-4 sm:right-8 font-mono font-semibold text-[160px] sm:text-[220px] md:text-[260px] leading-none text-ink opacity-[0.045]">
           01
         </span>
-        <div className="max-w-5xl mx-auto px-8 py-28 md:py-36">
-          <div className="mb-16">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 py-20 sm:py-28 md:py-36">
+          <div className="mb-12 sm:mb-16">
             <p className="font-mono text-sm text-accent tracking-wide mb-3">selected work</p>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
               Impact delivered, not just code written.
             </h2>
           </div>
@@ -332,24 +331,27 @@ export default function App() {
               <div
                 key={p.title}
                 className={cn(
-                  "grid grid-cols-[56px_1fr] gap-6 py-10",
+                  "grid grid-cols-1 sm:grid-cols-[48px_1fr] md:grid-cols-[56px_1fr] gap-4 sm:gap-6 py-8 sm:py-10",
                   i !== 0 && "border-t border-hairline"
                 )}
               >
-                <div className="font-mono text-base text-dim pt-1">{p.index}</div>
+                <div className="font-mono text-sm sm:text-base text-dim pt-1 hidden sm:block">{p.index}</div>
                 <div>
                   <div className="flex items-baseline justify-between gap-4 flex-wrap mb-3">
-                    <h3 className="text-2xl md:text-3xl font-bold tracking-tight">{p.title}</h3>
-                    <span className="font-mono text-sm text-dim">{p.year}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-xs sm:text-sm text-dim sm:hidden">[{p.index}]</span>
+                      <h3 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{p.title}</h3>
+                    </div>
+                    <span className="font-mono text-xs sm:text-sm text-dim">{p.year}</span>
                   </div>
-                  <p className="text-base md:text-lg text-muted max-w-2xl leading-relaxed mb-5">
+                  <p className="text-base sm:text-lg text-muted max-w-2xl leading-relaxed mb-5">
                     {p.description}
                   </p>
-                  <div className="flex flex-wrap gap-2.5 mb-5">
+                  <div className="flex flex-wrap gap-2 mb-5">
                     {p.tags.map((t) => (
                       <span
                         key={t}
-                        className="font-mono text-sm text-muted border border-hairline rounded px-3 py-1.5"
+                        className="font-mono text-xs sm:text-sm text-muted border border-hairline rounded px-2.5 sm:px-3 py-1 sm:py-1.5"
                       >
                         {t}
                       </span>
@@ -372,13 +374,13 @@ export default function App() {
 
       {/* ABOUT / EXPERIENCE + SKILLS */}
       <section id="about" className="relative overflow-hidden border-t border-hairline">
-        <span className="pointer-events-none select-none absolute -top-10 right-8 font-mono font-semibold text-[260px] leading-none text-ink opacity-[0.045]">
+        <span className="pointer-events-none select-none absolute -top-6 sm:-top-10 right-4 sm:right-8 font-mono font-semibold text-[160px] sm:text-[220px] md:text-[260px] leading-none text-ink opacity-[0.045]">
           02
         </span>
-        <div className="max-w-5xl mx-auto px-8 py-28 md:py-36">
-          <div className="mb-16">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 py-20 sm:py-28 md:py-36">
+          <div className="mb-12 sm:mb-16">
             <p className="font-mono text-sm text-accent tracking-wide mb-3">background</p>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Professional timeline</h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">Professional timeline</h2>
           </div>
 
           <div>
@@ -386,41 +388,41 @@ export default function App() {
               <div
                 key={e.role}
                 className={cn(
-                  "grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-3 sm:gap-8 py-10",
+                  "grid grid-cols-1 sm:grid-cols-[180px_1fr] md:grid-cols-[200px_1fr] gap-2 sm:gap-8 py-8 sm:py-10",
                   i !== 0 && "border-t border-hairline"
                 )}
               >
-                <div className="font-mono text-sm text-dim pt-1">{e.date}</div>
+                <div className="font-mono text-xs sm:text-sm text-dim pt-1">{e.date}</div>
                 <div>
-                  <h3 className="text-xl md:text-2xl font-bold tracking-tight mb-1">{e.role}</h3>
-                  <p className="text-base text-dim mb-3">{e.org}</p>
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight mb-1">{e.role}</h3>
+                  <p className="text-sm sm:text-base text-dim mb-3">{e.org}</p>
                   <p className="text-base md:text-lg text-muted leading-relaxed">{e.detail}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-16 pt-12 border-t border-hairline space-y-5">
-            <div className="flex flex-wrap items-baseline gap-3">
+          <div className="mt-12 sm:mt-16 pt-10 sm:pt-12 border-t border-hairline space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-3">
               <span className="font-mono text-sm text-dim min-w-[92px]">Core</span>
               <div className="flex flex-wrap gap-x-2 gap-y-2">
                 {["React", "TypeScript", "Node.js / Express", "PostgreSQL", "Docker", "Tailwind CSS"].map(
                   (s, i, arr) => (
                     <span key={s} className="text-base text-ink">
                       {s}
-                      {i !== arr.length - 1 && <span className="text-dim ml-2">·</span>}
+                      {i !== arr.length - 1 && <span className="text-dim ml-2 hidden sm:inline">·</span>}
                     </span>
                   )
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap items-baseline gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-3">
               <span className="font-mono text-sm text-dim min-w-[92px]">Exploring</span>
               <div className="flex flex-wrap gap-x-2 gap-y-2">
                 {["Next.js", "Supabase", "Drizzle ORM", "Socket.IO"].map((s, i, arr) => (
                   <span key={s} className="text-base text-ink">
                     {s}
-                    {i !== arr.length - 1 && <span className="text-dim ml-2">·</span>}
+                    {i !== arr.length - 1 && <span className="text-dim ml-2 hidden sm:inline">·</span>}
                   </span>
                 ))}
               </div>
@@ -430,46 +432,46 @@ export default function App() {
       </section>
 
       {/* FOOTER */}
-        <footer id="contact" className="relative overflow-hidden border-t border-hairline">
-              <span className="pointer-events-none select-none absolute -top-10 right-8 font-mono font-semibold text-[260px] leading-none text-ink opacity-[0.045]">
-                03
-              </span>
+      <footer id="contact" className="relative overflow-hidden border-t border-hairline">
+        <span className="pointer-events-none select-none absolute -top-6 sm:-top-10 right-4 sm:right-8 font-mono font-semibold text-[160px] sm:text-[220px] md:text-[260px] leading-none text-ink opacity-[0.045]">
+          03
+        </span>
 
-              <div className="max-w-5xl mx-auto px-8 pt-28 md:pt-36 pb-14">
-                <div className="mb-16 max-w-2xl">
-                  <h3 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                    Seeking full-stack roles or freelance web builds.
-                  </h3>
-                  <p className="text-lg text-muted leading-relaxed">
-                    Ready to audit your current system or build your MVP from scratch. Response within 24 hours.
-                  </p>
-                </div>
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 py-20 sm:py-28 md:py-36">
+          <div className="mb-12 sm:mb-16 max-w-2xl">
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
+              Seeking full-stack roles or freelance web builds.
+            </h3>
+            <p className="text-base sm:text-lg text-muted leading-relaxed">
+              Ready to audit your current system or build your MVP from scratch. Response within 24 hours.
+            </p>
+          </div>
 
-                <div className="flex flex-wrap gap-10 mb-20">
-                  <a href="mailto:juleethan@gmail.com" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity">
-                    <Mail className="w-[18px] h-[18px] text-dim" /> juleethan@gmail.com
-                  </a>
-                  <a href="tel:+639193694589" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity">
-                    <Phone className="w-[18px] h-[18px] text-dim" /> +63 919 369 4589
-                  </a>
-                  <a
-                    href="https://github.com/ithereforedontknow"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity"
-                  >
-                    <Github className="w-[18px] h-[18px] text-dim" /> GitHub
-                  </a>
-                </div>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-6 sm:gap-10 mb-16 sm:mb-20">
+            <a href="mailto:juleethan@gmail.com" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity">
+              <Mail className="w-[18px] h-[18px] text-dim shrink-0" /> juleethan@gmail.com
+            </a>
+            <a href="tel:+639193694589" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity">
+              <Phone className="w-[18px] h-[18px] text-dim shrink-0" /> +63 919 369 4589
+            </a>
+            <a
+              href="https://github.com/ithereforedontknow"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity"
+            >
+              <Github className="w-[18px] h-[18px] text-dim shrink-0" /> GitHub
+            </a>
+          </div>
 
-                <div className="flex items-center justify-between flex-wrap gap-3 pt-8 border-t border-hairline font-mono text-sm text-dim">
-                  <p className="m-0">© {new Date().getFullYear()} Jule Ethan Fontanilla</p>
-                  <button onClick={scrollToTop} className="flex items-center gap-1.5 hover:text-ink transition-colors">
-                    Back to top <ArrowUp className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-        </footer>
+          <div className="flex items-center justify-between flex-wrap gap-3 pt-8 border-t border-hairline font-mono text-sm text-dim">
+            <p className="m-0">© {new Date().getFullYear()} Jule Ethan Fontanilla</p>
+            <button onClick={scrollToTop} className="flex items-center gap-1.5 hover:text-ink transition-colors cursor-pointer">
+              Back to top <ArrowUp className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
