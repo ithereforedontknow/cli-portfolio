@@ -1,8 +1,9 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, ArrowUp, Mail, Phone, Code as Github } from "lucide-react";
+import { ArrowUpRight, ArrowUp, Mail, Phone, Code as Github, Menu, X } from "lucide-react";
 
 const THEMES = ["dark", "light", "pink"];
+const GITHUB_USERNAME = "ithereforedontknow";
 
 const PROJECTS = [
   {
@@ -13,30 +14,49 @@ const PROJECTS = [
       "Find cafes built for deep work. Rated by remote workers on WiFi, power, noise, and more.",
     tags: ["React", "TypeScript","Supabase", "TanStack Query"],
     href: "https://github.com/ithereforedontknow/spillthebeans",
+
+    liveHref: "https://spillthebeans-three.vercel.app/",
+    // Add a screenshot path/URL here to show a preview image on the card.
+    image: "/public/screenshots/spillthebeans.png",
   },
   {
     index: "02",
     title: "ClockIn/Out",
-    year: "2025",
+    year: "2026",
     description:
       "HR platform with a built-in LMS — time tracking, approvals, and courses with auto-scored quizzes and generated PDF certificates, secured with row-level access rules.",
     tags: ["React", "TypeScript", "Supabase", "TanStack Query"],
     href: "https://github.com/ithereforedontknow/clockinout",
+    liveHref: "",
+    image: "/public/screenshots/clockinout.png",
   },
   {
     index: "03",
-    title: "Photo Layout Pro",
-    year: "2025",
+    title: "Printer ni Ethan",
+    year: "2026",
     description:
       "Guided photo-layout generator with three bin-packing algorithms reaching up to 95% sheet efficiency, plus a built-in print-cost calculator — all processed client-side.",
     tags: ["React", "TypeScript", "jsPDF", "Tailwind CSS"],
     href: "https://github.com/ithereforedontknow/photo-layout-pro",
+    liveHref: "https://printer-ni-ethan.juleethan.workers.dev/",
+    image: "/public/screenshots/printer-ni-ethan.png",
+  },
+  {
+    index: "04",
+    title: "music.me",
+    year: "2026",
+    description:
+      "AI-powered music discovery app with a Tinder-like swipe interface, YouTube Music API integration, and Google Gemini for personalized recommendations. Features mood-based genre mapping, audio previews, a 'Surprise Me' feature, and a bento box visualization for saved tracks.",
+    tags: ["React 18", "TypeScript", "Vite", "Tailwind CSS", "Framer Motion", "YouTube Data API v3", "Google Generative AI"],
+    href: "https://github.com/ithereforedontknow/music.me",
+    liveHref: "https://music-me-green.vercel.app/",
+    image: "/public/screenshots/music-me.png",
   },
 ];
 
 const EXPERIENCE = [
   {
-    date: "Jan 2026 — Present",
+    date: "March 2026 — Present",
     role: "Government Internship Program (GIP)",
     org: "LGU — Agoo, La Union",
     detail:
@@ -220,8 +240,188 @@ const RotatingText = forwardRef((props, ref) => {
 });
 RotatingText.displayName = "RotatingText";
 
+/* ---------------------------------------------------------------------
+   GithubContributions — fetches public contribution counts and renders
+   a GitHub-style heatmap using the existing theme tokens.
+--------------------------------------------------------------------- */
+const LEVEL_OPACITY = [0, 28, 52, 76, 100];
+
+function GithubContributions({ username }) {
+  const [state, setState] = useState({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({ status: "loading" });
+
+    fetch(`https://github-contributions-api.jogruber.de/v4/${username}?y=last`)
+      .then((res) => {
+        if (!res.ok) throw new Error("request failed");
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        const days = data.contributions || [];
+        if (days.length === 0) throw new Error("empty");
+
+        const total = days.reduce((sum, d) => sum + d.count, 0);
+
+        let longest = 0;
+        let current = 0;
+        days.forEach((d) => {
+          if (d.count > 0) {
+            current += 1;
+            longest = Math.max(longest, current);
+          } else {
+            current = 0;
+          }
+        });
+
+        const startPad = new Date(`${days[0].date}T00:00:00`).getDay();
+        const padded = Array.from({ length: startPad }, () => null).concat(days);
+        const weeks = [];
+        for (let i = 0; i < padded.length; i += 7) {
+          weeks.push(padded.slice(i, i + 7));
+        }
+
+        const monthLabels = [];
+        let lastMonth = null;
+        weeks.forEach((week, wi) => {
+          const firstDay = week.find(Boolean);
+          if (!firstDay) return;
+          const month = new Date(`${firstDay.date}T00:00:00`).getMonth();
+          if (month !== lastMonth) {
+            monthLabels.push({
+              week: wi,
+              label: new Date(`${firstDay.date}T00:00:00`).toLocaleString("en-US", { month: "short" }),
+            });
+            lastMonth = month;
+          }
+        });
+
+        setState({ status: "ready", weeks, monthLabels, total, longest });
+      })
+      .catch(() => {
+        if (!cancelled) setState({ status: "error" });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [username]);
+
+  if (state.status === "error") {
+    return (
+      <p className="text-base text-muted">
+        Couldn't load live contribution data right now — see the full history on{" "}
+        <a
+          href={`https://github.com/${username}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-ink underline underline-offset-4 decoration-hairline hover:decoration-ink"
+        >
+          GitHub
+        </a>
+        .
+      </p>
+    );
+  }
+
+  if (state.status === "loading") {
+    return (
+      <div className="animate-pulse">
+        <div className="h-4 w-40 bg-hairline rounded mb-6" />
+        <div className="h-[100px] w-full bg-hairline rounded" />
+      </div>
+    );
+  }
+
+  const { weeks, monthLabels, total, longest } = state;
+  const cols = weeks.length;
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 mb-6 font-mono text-sm text-dim">
+        <span>
+          <span className="text-ink font-semibold">{total.toLocaleString()}</span> contributions in the past year
+        </span>
+        <span>
+          <span className="text-ink font-semibold">{longest}</span>-day longest streak
+        </span>
+      </div>
+
+      <div className="overflow-x-auto pb-2 -mx-1 px-1">
+        <div style={{ minWidth: cols * 14 }}>
+          <div
+            className="grid mb-1.5"
+            style={{ gridTemplateColumns: `repeat(${cols}, 11px)`, columnGap: "3px" }}
+          >
+            {weeks.map((_, wi) => {
+              const found = monthLabels.find((m) => m.week === wi);
+              return (
+                <span key={wi} className="text-[10px] font-mono text-dim leading-none whitespace-nowrap">
+                  {found ? found.label : ""}
+                </span>
+              );
+            })}
+          </div>
+
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: `repeat(${cols}, 11px)`,
+              gridTemplateRows: "repeat(7, 11px)",
+              gridAutoFlow: "column",
+              columnGap: "3px",
+              rowGap: "3px",
+            }}
+          >
+            {weeks.map((week, wi) =>
+              week.map((day, di) => (
+                <span
+                  key={`${wi}-${di}`}
+                  title={day ? `${day.count} contribution${day.count === 1 ? "" : "s"} on ${day.date}` : undefined}
+                  className="rounded-[2px]"
+                  style={{
+                    width: 11,
+                    height: 11,
+                    background: !day
+                      ? "transparent"
+                      : day.count === 0
+                      ? "var(--color-hairline, rgba(128,128,128,0.16))"
+                      : `color-mix(in srgb, var(--color-accent, currentColor) ${LEVEL_OPACITY[Math.min(day.level, 4)]}%, transparent)`,
+                  }}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1.5 mt-4 font-mono text-[10px] text-dim">
+        <span>Less</span>
+        {LEVEL_OPACITY.map((op, i) => (
+          <span
+            key={i}
+            className="rounded-[2px]"
+            style={{
+              width: 11,
+              height: 11,
+              background:
+                op === 0
+                  ? "var(--color-hairline, rgba(128,128,128,0.16))"
+                  : `color-mix(in srgb, var(--color-accent, currentColor) ${op}%, transparent)`,
+            }}
+          />
+        ))}
+        <span>More</span>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [theme, setTheme] = useState("dark");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const prefersLight =
@@ -229,7 +429,18 @@ export default function App() {
     setTheme(prefersLight ? "light" : "dark");
   }, []);
 
+  useEffect(() => {
+    document.title = "Jule Ethan Fontanilla — Full-Stack Developer";
+  }, []);
+
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  const navLinks = [
+    { href: "#work", label: "work" },
+    { href: "#activity", label: "github" },
+    { href: "#about", label: "about" },
+    { href: "#contact", label: "contact" },
+  ];
 
   return (
     <div data-theme={theme} className="min-h-screen bg-bg text-ink font-sans antialiased transition-colors duration-300 overflow-x-hidden">
@@ -240,9 +451,15 @@ export default function App() {
             Jule Ethan Fontanilla
           </a>
           <div className="hidden md:flex items-center gap-8 font-mono text-sm text-muted">
-            <a href="#work" className="hover:text-ink transition-colors">work</a>
-            <a href="#about" className="hover:text-ink transition-colors">about</a>
-            <a href="#contact" className="hover:text-ink transition-colors">contact</a>
+            {navLinks.map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                className="hover:text-ink transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
+              >
+                {l.label}
+              </a>
+            ))}
           </div>
           <div className="flex items-center gap-2.5 shrink-0">
             {THEMES.map((t) => (
@@ -252,7 +469,7 @@ export default function App() {
                 aria-label={`Switch to ${t} theme`}
                 title={t}
                 className={cn(
-                  "w-4 h-4 rounded-full border border-hairline",
+                  "w-4 h-4 rounded-full border border-hairline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
                   t === "dark" && "bg-[#0e0e10]",
                   t === "light" && "bg-[#fafaf8]",
                   t === "pink" && "bg-[#ff4fa0]",
@@ -260,8 +477,41 @@ export default function App() {
                 )}
               />
             ))}
+            <button
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              className="md:hidden ml-1 p-1 -mr-1 text-ink rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        <AnimatePresence initial={false}>
+          {menuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden overflow-hidden border-t border-hairline"
+            >
+              <div className="max-w-5xl mx-auto px-6 sm:px-8 py-6 flex flex-col gap-5 font-mono text-base text-muted">
+                {navLinks.map((l) => (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="hover:text-ink transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
+                  >
+                    {l.label}
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* HERO */}
@@ -294,20 +544,23 @@ export default function App() {
           />
         </h1>
 
-        <p className="text-lg sm:text-xl md:text-2xl text-muted max-w-2xl leading-relaxed mb-10 sm:mb-12">
+        <p className="text-lg sm:text-xl md:text-2xl text-muted max-w-2xl leading-relaxed mb-6">
           Hey, I'm Jule Ethan. Full-stack developer focused on simple, high-performance web software that makes work easier.
 
+        </p>
+        <p className="font-mono text-sm text-dim mb-10 sm:mb-12">
+          Currently: {EXPERIENCE[0].role} at {EXPERIENCE[0].org}
         </p>
         <div className="flex flex-wrap gap-6 sm:gap-9">
           <a
             href="#work"
-            className="inline-flex items-center gap-1.5 text-base font-medium text-ink border-b border-ink pb-1 hover:opacity-70 transition-opacity"
+            className="inline-flex items-center gap-1.5 text-base font-medium text-ink border-b border-ink pb-1 hover:opacity-70 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
           >
             View work <ArrowUpRight className="w-4 h-4" />
           </a>
           <a
             href="#contact"
-            className="inline-flex items-center gap-1.5 text-base font-medium text-muted border-b border-hairline pb-1 hover:text-ink hover:border-ink transition-colors"
+            className="inline-flex items-center gap-1.5 text-base font-medium text-muted border-b border-hairline pb-1 hover:text-ink hover:border-ink transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
           >
             Get in touch <ArrowUpRight className="w-4 h-4" />
           </a>
@@ -345,6 +598,18 @@ export default function App() {
                     </div>
                     <span className="font-mono text-xs sm:text-sm text-dim">{p.year}</span>
                   </div>
+
+                  {p.image && (
+                    <div className="mb-5 rounded-lg overflow-hidden border border-hairline">
+                      <img
+                        src={p.image}
+                        alt={`${p.title} preview`}
+                        className="w-full h-auto object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+
                   <p className="text-base sm:text-lg text-muted max-w-2xl leading-relaxed mb-5">
                     {p.description}
                   </p>
@@ -358,14 +623,26 @@ export default function App() {
                       </span>
                     ))}
                   </div>
-                  <a
-                    href={p.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-base font-medium text-ink hover:opacity-70 transition-opacity"
-                  >
-                    View code <ArrowUpRight className="w-4 h-4" />
-                  </a>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                    {p.liveHref && (
+                      <a
+                        href={p.liveHref}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-base font-medium text-ink hover:opacity-70 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
+                      >
+                        View live <ArrowUpRight className="w-4 h-4" />
+                      </a>
+                    )}
+                    <a
+                      href={p.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-base font-medium text-ink hover:opacity-70 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
+                    >
+                      View code <ArrowUpRight className="w-4 h-4" />
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}
@@ -373,10 +650,35 @@ export default function App() {
         </div>
       </section>
 
+      {/* GITHUB ACTIVITY */}
+      <section id="activity" className="relative overflow-hidden border-t border-hairline">
+        <span className="pointer-events-none select-none absolute -top-6 sm:-top-10 right-4 sm:right-8 font-mono font-semibold text-[160px] sm:text-[220px] md:text-[260px] leading-none text-ink opacity-[0.045]">
+          02
+        </span>
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 py-20 sm:py-28 md:py-36">
+          <div className="mb-12 sm:mb-16 flex items-end justify-between flex-wrap gap-4">
+            <div>
+              <p className="font-mono text-sm text-accent tracking-wide mb-3">activity</p>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">Shipping in public.</h2>
+            </div>
+            <a
+              href={`https://github.com/${GITHUB_USERNAME}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-base font-medium text-ink hover:opacity-70 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
+            >
+              @{GITHUB_USERNAME} <ArrowUpRight className="w-4 h-4" />
+            </a>
+          </div>
+
+          <GithubContributions username={GITHUB_USERNAME} />
+        </div>
+      </section>
+
       {/* ABOUT / EXPERIENCE + SKILLS */}
       <section id="about" className="relative overflow-hidden border-t border-hairline">
         <span className="pointer-events-none select-none absolute -top-6 sm:-top-10 right-4 sm:right-8 font-mono font-semibold text-[160px] sm:text-[220px] md:text-[260px] leading-none text-ink opacity-[0.045]">
-          02
+          03
         </span>
         <div className="max-w-5xl mx-auto px-6 sm:px-8 py-20 sm:py-28 md:py-36">
           <div className="mb-12 sm:mb-16">
@@ -435,7 +737,7 @@ export default function App() {
       {/* FOOTER */}
       <footer id="contact" className="relative overflow-hidden border-t border-hairline">
         <span className="pointer-events-none select-none absolute -top-6 sm:-top-10 right-4 sm:right-8 font-mono font-semibold text-[160px] sm:text-[220px] md:text-[260px] leading-none text-ink opacity-[0.045]">
-          03
+          04
         </span>
 
         <div className="max-w-5xl mx-auto px-6 sm:px-8 py-20 sm:py-28 md:py-36">
@@ -449,17 +751,17 @@ export default function App() {
           </div>
 
           <div className="flex flex-col sm:flex-row flex-wrap gap-6 sm:gap-10 mb-16 sm:mb-20">
-            <a href="mailto:juleethan@gmail.com" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity">
+            <a href="mailto:juleethan@gmail.com" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm">
               <Mail className="w-[18px] h-[18px] text-dim shrink-0" /> juleethan@gmail.com
             </a>
-            <a href="tel:+639193694589" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity">
+            <a href="tel:+639193694589" className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm">
               <Phone className="w-[18px] h-[18px] text-dim shrink-0" /> +63 919 369 4589
             </a>
             <a
               href="https://github.com/ithereforedontknow"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity"
+              className="flex items-center gap-2.5 text-base text-ink hover:opacity-70 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent rounded-sm"
             >
               <Github className="w-[18px] h-[18px] text-dim shrink-0" /> GitHub
             </a>
@@ -467,7 +769,10 @@ export default function App() {
 
           <div className="flex items-center justify-between flex-wrap gap-3 pt-8 border-t border-hairline font-mono text-sm text-dim">
             <p className="m-0">© {new Date().getFullYear()} Jule Ethan Fontanilla</p>
-            <button onClick={scrollToTop} className="flex items-center gap-1.5 hover:text-ink transition-colors cursor-pointer">
+            <button
+              onClick={scrollToTop}
+              className="flex items-center gap-1.5 hover:text-ink transition-colors cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
               Back to top <ArrowUp className="w-3.5 h-3.5" />
             </button>
           </div>
