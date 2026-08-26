@@ -17,7 +17,7 @@ const PROJECTS = [
 
     liveHref: "https://spillthebeans-three.vercel.app/",
     // Add a screenshot path/URL here to show a preview image on the card.
-    image: "/public/screenshots/spillthebeans.png",
+    image: "/screenshots/spillthebeans.png",
   },
   {
     index: "02",
@@ -28,7 +28,7 @@ const PROJECTS = [
     tags: ["React", "TypeScript", "Supabase", "TanStack Query"],
     href: "https://github.com/ithereforedontknow/clockinout",
     liveHref: "",
-    image: "/public/screenshots/clockinout.png",
+    image: "/screenshots/clockinout.png",
   },
   {
     index: "03",
@@ -39,19 +39,19 @@ const PROJECTS = [
     tags: ["React", "TypeScript", "jsPDF", "Tailwind CSS"],
     href: "https://github.com/ithereforedontknow/photo-layout-pro",
     liveHref: "https://printer-ni-ethan.juleethan.workers.dev/",
-    image: "/public/screenshots/printer-ni-ethan.png",
+    image: "/screenshots/printer-ni-ethan.png",
   },
-  {
-    index: "04",
-    title: "music.me",
-    year: "2026",
-    description:
-      "AI-powered music discovery app with a Tinder-like swipe interface, YouTube Music API integration, and Google Gemini for personalized recommendations. Features mood-based genre mapping, audio previews, a 'Surprise Me' feature, and a bento box visualization for saved tracks.",
-    tags: ["React 18", "TypeScript", "Vite", "Tailwind CSS", "Framer Motion", "YouTube Data API v3", "Google Generative AI"],
-    href: "https://github.com/ithereforedontknow/music.me",
-    liveHref: "https://music-me-green.vercel.app/",
-    image: "/public/screenshots/music-me.png",
-  },
+  // {
+  //   index: "04",
+  //   title: "music.me",
+  //   year: "2026",
+  //   description:
+  //     "AI-powered music discovery app with a Tinder-like swipe interface, YouTube Music API integration, and Google Gemini for personalized recommendations. Features mood-based genre mapping, audio previews, a 'Surprise Me' feature, and a bento box visualization for saved tracks.",
+  //   tags: ["React 18", "TypeScript", "Vite", "Tailwind CSS", "Framer Motion", "YouTube Data API v3", "Google Generative AI"],
+  //   href: "https://github.com/ithereforedontknow/music.me",
+  //   liveHref: "https://music-me-green.vercel.app/",
+  //   image: "/screenshots/music-me.png",
+  // },
 ];
 
 const EXPERIENCE = [
